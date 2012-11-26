@@ -1,0 +1,4 @@
+/etc/lighttpd/conf-enabled
+/etc/attic
+/var/cache/attic
+/usr/bin
