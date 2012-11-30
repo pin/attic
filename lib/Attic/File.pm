@@ -13,13 +13,17 @@ use Plack::MIME;
 use Plack::Util;
 use URI;
 use Image::ExifTool;
+use File::Path;
+use File::Basename;
+use Image::Magick;
+use Fcntl ':mode';
 
 my $log = Log::Log4perl->get_logger();
 my $et = Image::ExifTool->new();
+my $cache_et = Image::ExifTool->new();
 
 sub prepare_app {
 	my $self = shift;
-	$self->{content_length} = $self->{status}->[7];
 	$log->info($self->uri . " file loaded");
 }
 
@@ -50,12 +54,54 @@ sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
+	if (my $px = $request->uri->query_param('px')) {
+		my $cache_path = File::Spec->catfile('/home/pin/.cache/attic', $px, $self->{name});
+		$cache_path =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
+		my @cache_s = stat $cache_path or $log->debug("$cache_path: $!");
+		unless (@cache_s and $cache_s[9] > $self->modification_time) {
+			my $start_time = time;
+			unless (-d dirname($cache_path)) {
+				File::Path::make_path(dirname($cache_path));	
+			}
+			my $image = Image::Magick->new();
+			my $x = $image->Read($self->path);
+			return [ 404, ['Content-type', 'text/plain'], "can't read image: $x"] if $x; 
+			my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
+			my $aspect_ratio = $px / ($height > $width ? $height : $width);
+			$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
+			#$image->UnsharpMask(amount => 100, radius => 5, threshold => 1);
+			$image->Sharpen(radius => 2);
+			
+			if ($et->ExtractInfo($self->path)) {
+				if (defined $et->GetValue('Orientation') and $et->GetValue('Orientation') =~ m/Rotate ([0-9]+)/) {
+					$image->Rotate(degrees=>$1);
+				}
+			}
+			$image->Write(filename => $cache_path);
+			$cache_et->ExtractInfo($cache_path);
+			$cache_et->SetNewValue('IFD1:Orientation' => 1, Type => 'ValueConv');
+			$cache_et->SetNewValue('EXIF:Orientation' => 1, Type => 'ValueConv');
+			$cache_et->WriteInfo($cache_path);
+			$log->info($request->uri . " was generated in " . (time - $start_time) . ' second(s)')
+		}
+		@cache_s = stat $cache_path or return [500, ['Content-type', 'text/plain'], ["failed to create $cache_path: $!"]];
+		if (S_ISREG($cache_s[2])) {
+			open my $fh, "<:raw", $cache_path
+				or return [ 403, ['Content-type', 'text/plain'], ["can't open $cache_path: $!"]];
+			Plack::Util::set_io_path($fh, Cwd::realpath($cache_path));
+			return [ 200, [
+				'Content-Type'   => Plack::MIME->mime_type($cache_path),
+				'Content-Length' => $cache_s[7],
+				'Last-Modified'  => HTTP::Date::time2str($cache_s[9])
+			], $fh, ];
+		}
+	}
 	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
 	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
 	return [200, [
 		'Content-Type' => $self->content_type,
 		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
-		'Content-Length' => $self->{content_length}
+		'Content-Length' => $self->{status}->[7]
 	], $fh, ];
 }
 

@@ -41,7 +41,11 @@ sub prepare_app {
 			}
 		}
 		elsif (S_ISDIR($s[2])) {
-			$self->{directories}->{$f} = $self->{router}->directory($self->entry_uri($f), \@s);
+			my $dir_uri = URI->new($self->{uri});
+			my @dir_s = $dir_uri->path_segments;
+			my $s = pop @dir_s;
+			$dir_uri->path_segments(@dir_s, $f, $s);
+			$self->{directories}->{$f} = $self->{router}->directory($dir_uri, \@s);
 		}
 	}
 	closedir $dh;
@@ -51,14 +55,8 @@ sub prepare_app {
 	$log->info("$self->{uri} directory init complete");
 }
 
-sub entry_uri {
-	my $self = shift;
-	my ($name) = @_;
-	my $uri = URI->new($self->{uri});
-	my @s = $uri->path_segments;
-	pop @s;
-	$uri->path_segments(@s, $name);
-	return $uri;
+sub uri {
+	shift->{uri};
 }
 
 sub path {
@@ -73,13 +71,15 @@ sub pop_name {
 	return undef if $uri->path eq '/';
 	my @segments = $uri->path_segments;
 	my $name = pop @segments;
+	$name = pop @segments unless (length $name); # in case we already have slash at the end
 	$parent_uri->path_segments(@segments, '');
 	return ($parent_uri, $name);
 }
 
 sub name {
 	my $self = shift;
-	my (undef, $name) = __PACKAGE__->pop_name($self->{uri});
+	my ($a, $name) = __PACKAGE__->pop_name($self->{uri});
+#	return $self->{uri};
 	return $name;
 }
 
@@ -121,10 +121,14 @@ sub call {
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
 			foreach my $e (sort {$b->modification_time <=> $a->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
+				$feed->add_entry($entry);
 				$entry->title($e->name);
 				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
 				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
-				$feed->add_entry($entry);
+				my $link = XML::Atom::Link->new();
+				$link->type('text/html');
+				$link->href($e->uri);
+				$entry->add_link($link);
 			}
 			return [200, ['Content-type', 'text/plain'], ["$self->{uri}\n\n" . $feed->as_xml]];
 		}
