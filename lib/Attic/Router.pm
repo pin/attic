@@ -10,6 +10,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use File::Spec;
 use Attic::Directory;
+use URI;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -17,39 +18,45 @@ sub prepare_app {
 
 }
 
+sub path {
+	my $self = shift;
+	my ($uri) = @_;
+	File::Spec->catdir($self->{home_dir}, $uri->path);
+}
+
+sub directory_app {
+	my $self = shift;
+	my ($uri) = @_;
+	return $self->{directory_app}->{$uri->path} if exists $self->{directory_app}->{$uri->path};
+	my $directory_uri = URI->new($uri->path);
+	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self);
+	my $dir_app = eval {
+		$dir->to_app;
+	};
+	if (my $error = $@) {
+#		$log->debug("can't load directory for $uri: $error");
+		return undef;
+	}
+	return $self->{directory_app}->{$directory_uri} = $dir_app
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	
-	my $path = File::Spec->catdir($self->{home_dir}, $request->path);
-	
-	my ($parent_uri) = Attic::Directory->pop_filename($request->uri);
-	my $parent_path = $parent_uri ? File::Spec->catdir($self->{home_dir}, $parent_uri->path) : undef;
-
-	my $dir = eval {
-		Attic::Directory->new(path => $path, uri => $request->uri)->to_app;
-	};
-	if (my $error = $@) {
-		if ($parent_path) {
-			my $dir = eval {
-				Attic::Directory->new(path => $parent_path, uri => $parent_uri)->to_app;
-			};
-			if (my $error = $@) {
-				$log->error("can't load $path nor $parent_path as directory: $error");
-				return [404, ['Content-type', 'text/plain'], [$request->path . ' not found']];
-			}
-			else {
-				return $dir->($env);
-			}
-		}
-		else {
-			$log->error("can't load $path as directory: $error");
-			return [404, ['Content-type', 'text/plain'], [$request->path . ' not found']];
-		}
+	if (my $dir_app = $self->directory_app($request->uri)) {
+		return $dir_app->($env);
 	}
 	else {
-		return $dir->($env);
+		my ($parent_uri, $name) = Attic::Directory->pop_name($request->uri);
+		if (my $parent_dir_app = $self->directory_app($parent_uri)) {
+			return $parent_dir_app->($env);
+		}
+		else {
+			$log->error("$parent_uri not found");
+			return [404, ['Content-type', 'text/plain'], [$request->path . ' not found']];
+		}
 	}
 }
 
