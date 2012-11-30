@@ -12,13 +12,15 @@ use File::Spec;
 use Plack::MIME;
 use Plack::Util;
 use URI;
+use Image::ExifTool;
 
 my $log = Log::Log4perl->get_logger();
+my $et = Image::ExifTool->new();
 
 sub prepare_app {
 	my $self = shift;
-	$self->{content_length} = $self->{dir}->{stats}->{$self->{name}}->[7];
-	$self->{last_modified} = $self->{dir}->{stats}->{$self->{name}}->[9];
+	$self->{content_length} = $self->{status}->[7];
+	$self->{last_modified} = $self->{status}->[9];
 	$log->info($self->uri . " file loaded");
 }
 

@@ -11,6 +11,7 @@ use Log::Log4perl;
 use File::Spec;
 use Attic::Directory;
 use URI;
+use Fcntl ':mode';
 
 my $log = Log::Log4perl->get_logger();
 
@@ -24,20 +25,34 @@ sub path {
 	File::Spec->catdir($self->{home_dir}, $uri->path);
 }
 
+sub directory {
+	my $self = shift;
+	my ($uri, $stat) = @_;
+	return $self->{directories}->{$uri->path} if exists $self->{directories}->{$uri->path};
+	my $directory_uri = URI->new($uri->path);
+	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self);
+	if ($stat) {
+		$dir->{status} = $stat;
+	}
+	else {
+		my @s = stat $dir->path or do {
+			$log->debug("can't stat " . $dir->path . ": $!");
+			return undef;
+		};
+		unless (S_ISDIR($s[2])) {
+			return undef;
+		}
+		$dir->{status} = \@s;
+	}
+	return $self->{directories}->{$uri->path} = $dir;
+}
+
 sub directory_app {
 	my $self = shift;
 	my ($uri) = @_;
 	return $self->{directory_app}->{$uri->path} if exists $self->{directory_app}->{$uri->path};
-	my $directory_uri = URI->new($uri->path);
-	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self);
-	my $dir_app = eval {
-		$dir->to_app;
-	};
-	if (my $error = $@) {
-#		$log->debug("can't load directory for $uri: $error");
-		return undef;
-	}
-	return $self->{directory_app}->{$directory_uri} = $dir_app
+	my $dir = $self->directory($uri) or return undef;
+	return $self->{directory_app}->{$dir->{uri}} = $dir->to_app
 }
 
 sub call {

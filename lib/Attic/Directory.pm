@@ -26,9 +26,8 @@ sub prepare_app {
 			$log->debug("can't stat $path: $!");
 			return;
 		};
-		$self->{stats}->{$f} = \@s;
 		if (S_ISREG($s[2])) {
-			my $file = $self->{files}->{$f} = Attic::File->new(dir => $self, name => $f);
+			my $file = $self->{files}->{$f} = Attic::File->new(dir => $self, name => $f, status => \@s);
 			my @t = split /\./, $f;
 			pop @t;
 			while (@t) {
@@ -40,9 +39,22 @@ sub prepare_app {
 				pop @t;
 			}
 		}
+		elsif (S_ISDIR($s[2])) {
+			$self->{directories}->{$f} = $self->{router}->directory($self->entry_uri($f), \@s);
+		}
 	}
 	closedir $dh;
 	$log->info("$self->{uri} directory init complete");
+}
+
+sub entry_uri {
+	my $self = shift;
+	my ($name) = @_;
+	my $uri = URI->new($self->{uri});
+	my @s = $uri->path_segments;
+	pop @s;
+	$uri->path_segments(@s, $name);
+	return $uri;
 }
 
 sub path {
