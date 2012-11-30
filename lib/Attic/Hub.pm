@@ -38,6 +38,16 @@ sub add_file {
 	$self->{files}->{$file->{name}} = $file;
 }
 
+sub uri {
+	my $self = shift;
+	return $self->{dir}->{uri} if $self->{name} eq 'index';
+	my $uri = URI->new($self->{dir}->{uri});
+	my @s = $uri->path_segments;
+	pop @s;
+	$uri->path_segments(@s, $self->{name});
+	return $uri;
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;

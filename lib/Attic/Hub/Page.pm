@@ -16,8 +16,7 @@ my $log = Log::Log4perl->get_logger();
 sub call {
 	my $self = shift;
 	my ($env) = @_;
-	my $path = File::Spec->catfile($self->{hub}->{dir}->{path}, $self->{hub}->{name} . '.html');
-	return [200, ['Content-type', 'text/plain'], ["page: $path"]];
+	return [200, ['Content-type', 'text/plain'], ["page: " . $self->{hub}->uri]];
 }
 
 1;
