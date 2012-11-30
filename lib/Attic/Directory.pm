@@ -122,6 +122,8 @@ sub call {
 			foreach my $e (sort {$b->modification_time <=> $a->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
 				$entry->title($e->name);
+				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
+				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 				$feed->add_entry($entry);
 			}
 			return [200, ['Content-type', 'text/plain'], ["$self->{uri}\n\n" . $feed->as_xml]];

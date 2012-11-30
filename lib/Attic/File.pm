@@ -20,13 +20,16 @@ my $et = Image::ExifTool->new();
 sub prepare_app {
 	my $self = shift;
 	$self->{content_length} = $self->{status}->[7];
-	$self->{last_modified} = $self->{status}->[9];
 	$log->info($self->uri . " file loaded");
 }
 
 sub path {
 	my $self = shift;
 	File::Spec->catfile($self->{dir}->path, $self->{name});
+}
+
+sub modification_time {
+	shift->{status}->[9];
 }
 
 sub uri {
@@ -51,7 +54,7 @@ sub call {
 	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
 	return [200, [
 		'Content-Type' => $self->content_type,
-		'Last-Modified' => HTTP::Date::time2str($self->{last_modified}),
+		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
 		'Content-Length' => $self->{content_length}
 	], $fh, ];
 }
