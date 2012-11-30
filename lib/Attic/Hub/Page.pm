@@ -13,6 +13,10 @@ my $log = Log::Log4perl->get_logger();
 #	$log->info("PAGE prepared");
 #}
 
+sub modification_time {
+	shift->{page}->{status}->[9];
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;

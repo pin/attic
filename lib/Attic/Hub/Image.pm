@@ -8,6 +8,10 @@ use base 'Plack::Component';
 use File::Spec;
 use Data::Dumper;
 
+sub modification_time {
+	shift->{image}->{status}->[9];
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;

@@ -1,4 +1,4 @@
-package Attic::Hub;
+package Attic::Hub; # maybe rename to Pile?
 
 use warnings;
 use strict;
@@ -18,13 +18,13 @@ my $log = Log::Log4perl->get_logger();
 
 sub prepare_app {
 	my $self = shift;
-	if (my ($html_f) = grep {$_ eq $self->{name} . '.html'} keys %{$self->{files}}) {
-		$log->info("hub $self->{name} init as Page: $html_f");
-		$self->{impl} = Attic::Hub::Page->new(hub => $self);
+	if (my ($html_name) = grep {$_ eq $self->{name} . '.html'} keys %{$self->{files}}) {
+		$log->info("hub $self->{name} init as Page: $html_name");
+		$self->{impl} = Attic::Hub::Page->new(hub => $self, page => $self->{files}->{$html_name});
 	}
 	elsif (my ($image_f) = grep {$_->content_type =~ /^image\//} values %{$self->{files}}) {
 		$log->info("hub $self->{name} init as Image: $image_f->{name}");
-		$self->{impl} = Attic::Hub::Image->new(hub => $self);
+		$self->{impl} = Attic::Hub::Image->new(hub => $self, image => $image_f);
 	}
 	else {
 		$log->info("hub $self->{name} init as None");
@@ -46,6 +46,15 @@ sub uri {
 	pop @s;
 	$uri->path_segments(@s, $self->{name});
 	return $uri;
+}
+
+sub name {
+	shift->{name};
+}
+
+sub modification_time {
+	my $self = shift;
+	$self->{impl}->modification_time;
 }
 
 sub call {
