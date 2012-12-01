@@ -1,2 +1,6 @@
 .includepath
 .project
+debian/attic
+debian/attic.debhelper.log
+debian/attic.substvars
+debian/files
