@@ -1,8 +1,11 @@
+# plackup -Ilib -r -R template
+
 use warnings;
 use strict;
 
 use Attic::Router;
 use Log::Log4perl qw(:easy);
+use Attic::Config;
 
 my $log_conf = q(
 	log4perl.rootLogger = DEBUG, console
@@ -13,5 +16,5 @@ my $log_conf = q(
 );
 Log::Log4perl::init(\$log_conf);
 
-my $dir = Attic::Router->new(home_dir => '/home/pin/Documents');
+my $dir = Attic::Router->new(home_dir => Attic::Config->value('documents_dir'));
 $dir->to_app;

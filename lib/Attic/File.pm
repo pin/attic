@@ -17,6 +17,7 @@ use File::Path;
 use File::Basename;
 use Image::Magick;
 use Fcntl ':mode';
+use Attic::Config;
 
 my $log = Log::Log4perl->get_logger();
 my $et = Image::ExifTool->new();
@@ -56,7 +57,7 @@ sub call {
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	if (my $px = $request->uri->query_param('px')) {
-		my $cache_path = File::Spec->catfile('/home/pin/.cache/attic', $px, $self->{name});
+		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $px, $self->{name});
 		$cache_path =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
 		my @cache_s = stat $cache_path or $log->debug("$cache_path: $!");
 		unless (@cache_s and $cache_s[9] > $self->modification_time) {
