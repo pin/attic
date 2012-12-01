@@ -17,7 +17,7 @@ sub stylesheet {
 	my ($name) = @_;
 	my $path = File::Spec->catfile($FindBin::Bin, 'template', $name . '.xsl');
 	$log->info("parsing $path");
-	my $xsl = XML::LibXML->load_xml(location => File::Spec->catfile($FindBin::Bin, 'template', $name . '.xsl'));
+	my $xsl = XML::LibXML->load_xml(location => $path);
 	return $xslt->parse_stylesheet($xsl);
 }
 
