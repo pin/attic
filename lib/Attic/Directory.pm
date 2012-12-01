@@ -79,7 +79,6 @@ sub pop_name {
 sub name {
 	my $self = shift;
 	my ($a, $name) = __PACKAGE__->pop_name($self->{uri});
-#	return $self->{uri};
 	return $name;
 }
 
@@ -107,6 +106,15 @@ sub modification_time {
 	shift->{status}->[9];
 }
 
+sub populate_entry {
+	my $self = shift;
+	my ($entry, $request) = @_;
+	my $category = XML::Atom::Category->new();
+	$category->term('directory');
+	$category->scheme('http://dp-net.com/2009/Atom/EntryType');
+	$entry->category($category);
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
@@ -118,19 +126,29 @@ sub call {
 		}
 		else {
 			my $feed = XML::Atom::Feed->new();
+			$feed->title($self->name);
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
 			foreach my $e (sort {$b->modification_time <=> $a->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
-				$feed->add_entry($entry);
 				$entry->title($e->name);
 				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
 				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
+
 				my $link = XML::Atom::Link->new();
 				$link->type('text/html');
+				$link->rel('self');
 				$link->href($e->uri);
 				$entry->add_link($link);
+
+				$e->populate_entry($entry, $env);
+				$feed->add_entry($entry);
 			}
-			return [200, ['Content-type', 'text/plain'], ["$self->{uri}\n\n" . $feed->as_xml]];
+			if ($request->param('type') and $request->param('type') eq 'atom') {
+				return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
+			}
+			else {
+				return [200, ['Content-type', 'text/html'], [Attic::Template->transform('directory', $feed->elem->ownerDocument)]];
+			}
 		}
 	}
 	else {

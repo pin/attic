@@ -53,15 +53,17 @@ sub name {
 }
 
 sub modification_time {
-	my $self = shift;
-	$self->{impl}->modification_time;
+	shift->{impl}->modification_time;
 }
 
 sub call {
 	my $self = shift;
 	my ($env) = @_;
-#	$log->info("CALL to hub");
 	return $self->{impl}->to_app->($env);
+}
+
+sub populate_entry {
+	shift->{impl}->populate_entry(@_);
 }
 
 1;

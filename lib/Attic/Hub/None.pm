@@ -16,6 +16,15 @@ sub modification_time {
 	return $modification_time;
 }
 
+sub populate_entry {
+	my $self = shift;
+	my ($entry, $request) = @_;
+	my $category = XML::Atom::Category->new();
+	$category->term('none');
+	$category->scheme('http://dp-net.com/2009/Atom/EntryType');
+	$entry->category($category);
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;

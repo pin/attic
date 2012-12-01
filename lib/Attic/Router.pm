@@ -15,10 +15,6 @@ use Fcntl ':mode';
 
 my $log = Log::Log4perl->get_logger();
 
-sub prepare_app {
-
-}
-
 sub path {
 	my $self = shift;
 	my ($uri) = @_;

@@ -47,6 +47,7 @@ sub uri {
 
 sub content_type {
 	my $self = shift;
+	return 'image/x-dcraw' if uc $self->path =~ /\.(CRW|NEF|CR2)$/i;
 	Plack::MIME->mime_type($self->path) || 'text/plain';
 }
 
