@@ -1,5 +1,6 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:atom="http://www.w3.org/2005/Atom">
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:exif="http://dp-net.com/2012/Exif">
 
 <xsl:include href="config.xsl"/>
 <xsl:include href="date.xsl"/>
@@ -17,15 +18,30 @@
       <figure style="imargin: 0em;">
         <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?px=1200" style="idisplay: inline-block; float: left; margin-bottom: 1em; margin-right: 1em"/>
         <figcaption style="idisplay: inline-block; ivertical-align: top">
-          <xsl:apply-templates select="atom:updated"/>
+          <xsl:call-template name="date"/>
         </figcaption>
       </figure>
     </body>
   </html>
 </xsl:template>
 
+<xsl:template name="date">
+  <xsl:choose>
+    <xsl:when test="exif:date">
+      <xsl:apply-templates select="exif:date"/>
+    </xsl:when>
+    <xsl:when test="atom:updated">
+      <xsl:apply-templates select="atom:updated"/>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="atom:updated">
-  <div class="date"><xsl:call-template name="date"/></div>
+  <div class="date"><xsl:call-template name="iso-date"/></div>
+</xsl:template>
+
+<xsl:template match="exif:date">
+  <div class="date"><xsl:call-template name="exif-date"/></div>
 </xsl:template>
 
 </xsl:stylesheet>

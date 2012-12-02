@@ -35,10 +35,17 @@
 
 <xsl:variable name="monthNames" select="document('')/*/dp:month-ru/*"/>
 
-<xsl:template match="text()" name="date">
+<xsl:template match="text()" name="iso-date">
   <xsl:variable name="year" select="substring-before(., '-')"/>
   <xsl:variable name="month" select="substring-before(substring-after(., '-'), '-')"/>
   <xsl:variable name="day" select="substring-after(substring-after(., '-'), '-')"/>
+  <xsl:value-of select="concat(number($day), '&#160;', $monthNames[0 + $month], '&#160;', $year)"/>
+</xsl:template>
+
+<xsl:template match="text()" name="exif-date">
+  <xsl:variable name="year" select="substring-before(., ':')"/>
+  <xsl:variable name="month" select="substring-before(substring-after(., ':'), ':')"/>
+  <xsl:variable name="day" select="substring-before(substring-after(substring-after(., ':'), ':'), ' ')"/>
   <xsl:value-of select="concat(number($day), '&#160;', $monthNames[0 + $month], '&#160;', $year)"/>
 </xsl:template>
 

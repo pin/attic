@@ -18,6 +18,7 @@ use File::Basename;
 use Image::Magick;
 use Fcntl ':mode';
 use Attic::Config;
+use URI::QueryParam;
 
 my $log = Log::Log4perl->get_logger();
 my $et = Image::ExifTool->new();
@@ -52,11 +53,42 @@ sub content_type {
 	Plack::MIME->mime_type($self->path) || 'text/plain';
 }
 
+sub exif {
+	my $self = shift;
+	$et->ExtractInfo($self->path) or return undef;
+	return $et->GetInfo({Group0 => ['EXIF', 'MakerNotes']});
+}
+
+sub xmp_param {
+	my $self = shift;
+	my ($ns, $key, $value) = @_;
+	unless ($self->{et}) {
+		my $et = Image::ExifTool->new();
+		$et->ExtractInfo($self->path) or return undef;
+		$self->{et} = $et;	
+	}
+	if ($#_ > 2) {
+		delete $self->{et};
+		return $value;
+	}
+	else {
+		if (my $i = $self->{et}->GetInfo({Group1 => ['XMP-' . $ns]})) {
+			return $i->{$key};
+		}
+		return undef;
+	}
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	if (my $px = $request->uri->query_param('px')) {
+		if ($px > 1200) {
+			my $uri = $request->uri;
+			$uri->query_param('px', 1200);
+			return [301, ['Location' => $uri], ["follow $uri"]];
+		}
 		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $px, $self->{name});
 		$cache_path =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
 		my @cache_s = stat $cache_path or $log->debug("$cache_path: $!");
@@ -76,7 +108,7 @@ sub call {
 			
 			if ($et->ExtractInfo($self->path)) {
 				if (defined $et->GetValue('Orientation') and $et->GetValue('Orientation') =~ m/Rotate ([0-9]+)/) {
-					$image->Rotate(degrees=>$1);
+					$image->Rotate(degrees => $1);
 				}
 			}
 			$image->Write(filename => $cache_path);
@@ -98,13 +130,16 @@ sub call {
 			], $fh, ];
 		}
 	}
-	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
-	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
-	return [200, [
-		'Content-Type' => $self->content_type,
-		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
-		'Content-Length' => $self->{status}->[7]
-	], $fh, ];
+	my $uri = $request->uri;
+	$uri->query_param_append('px', 1200);
+	return [301, ['Location' => $uri], ["follow $uri"]];
+#	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
+#	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
+#	return [200, [
+#		'Content-Type' => $self->content_type,
+#		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
+#		'Content-Length' => $self->{status}->[7]
+#	], $fh, ];
 }
 
 1;

@@ -132,7 +132,7 @@ sub populate_siblings {
 	if (exists $self->{hubs}->{$name}) {
 		my $previous_name;
 		foreach my $e (sort {$b->modification_time <=> $a->modification_time} values %{$self->{hubs}}) {
-			if ($previous_name eq $name) {
+			if (defined $previous_name and $previous_name eq $name) {
 				my $link = XML::Atom::Link->new();
 				$link->rel('next');
 				$link->title($e->name);
@@ -159,6 +159,11 @@ sub call {
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	if ($request->uri->path eq $self->{uri}->path) {
+		unless ($request->uri->path =~ /\/$/) {
+			my $uri = $request->uri;
+			$uri->path($uri->path . '/');
+			return [301, ['Location' => $uri], ["follow $uri"]];
+		}
 		if (my $hub_app = $self->hub_app('index')) {
 			$log->debug("directory request to " . $request->uri->path . " goes to index");
 			return $hub_app->($env);
@@ -167,9 +172,10 @@ sub call {
 			my $feed = XML::Atom::Feed->new();
 			$feed->title($self->name);
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
-			foreach my $e (sort {$b->modification_time <=> $a->modification_time} @entries) {
+			foreach my $e (sort {$a->modification_time <=> $b->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
 				$entry->title($e->name);
+				
 				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
 				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 
