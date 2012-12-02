@@ -25,8 +25,8 @@ sub populate_entry {
 	$entry->category($category);
 
     my $link = XML::Atom::Link->new();
-    $link->type('image/jpg');
     $link->rel('alternate');
+    $link->type('image/jpg');
     $link->href($self->{image}->uri);
     $entry->add_link($link);
 }
@@ -37,17 +37,12 @@ sub call {
 	my $request = Plack::Request->new($env);
 	my $entry = XML::Atom::Entry->new();
 
+	$self->populate_entry($entry, $request);
+
 	my ($day, $mon, $year) = (localtime $self->{image}->modification_time)[3..5];
 	$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 
-    my $link = XML::Atom::Link->new();
-    $link->type('text/html');
-    $link->title($self->{hub}->{dir}->name);
-    $link->rel('up');
-    $link->href($self->{hub}->{dir}->uri);
-    $entry->add_link($link);
-
-	$self->populate_entry($entry, $request);
+	$self->{hub}->{dir}->populate_siblings($entry, $self->{hub}->name);
 
 	if ($request->param('type') and $request->param('type') eq 'atom') {
 		return [200, ['Content-type', 'text/xml'], [$entry->as_xml]];

@@ -23,10 +23,11 @@ sub prepare_app {
 	while (my $f = readdir $dh) {
 		next if $f =~ /^\./;
 		my $path = File::Spec->catfile($self->path, $f);
-		my @s = stat $path or do {
+		my @s = lstat $path or do {
 			$log->debug("can't stat $path: $!");
 			return;
 		};
+		next unless my $is_other_readable = $s[2] & S_IROTH;
 		if (S_ISREG($s[2])) {
 			my $file = $self->{files}->{$f} = Attic::File->new(dir => $self, name => $f, status => \@s);
 			my @t = split /\./, $f;
@@ -115,6 +116,44 @@ sub populate_entry {
 	$entry->category($category);
 }
 
+sub populate_siblings {
+	my $self = shift;
+	my ($entry, $name) = @_;
+	
+	return if $name eq 'index';
+
+    my $link = XML::Atom::Link->new();
+    $link->rel('index');
+    $link->title($self->name);
+    $link->type('text/html');
+    $link->href($self->uri);
+    $entry->add_link($link);
+
+	if (exists $self->{hubs}->{$name}) {
+		my $previous_name;
+		foreach my $e (sort {$b->modification_time <=> $a->modification_time} values %{$self->{hubs}}) {
+			if ($previous_name eq $name) {
+				my $link = XML::Atom::Link->new();
+				$link->rel('next');
+				$link->title($e->name);
+				$link->type('text/html');
+				$link->href($e->uri);
+				$entry->add_link($link);
+				last;
+			}
+			if ($previous_name and $e->name eq $name) {
+				my $link = XML::Atom::Link->new();
+				$link->rel('previous');
+				$link->title($self->{hubs}->{$previous_name}->name);
+				$link->type('text/html');
+				$link->href($self->{hubs}->{$previous_name}->uri);
+				$entry->add_link($link);
+			}
+			$previous_name = $e->name;
+		}
+	}
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
@@ -135,8 +174,8 @@ sub call {
 				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 
 				my $link = XML::Atom::Link->new();
-				$link->type('text/html');
 				$link->rel('self');
+				$link->type('text/html');
 				$link->href($e->uri);
 				$entry->add_link($link);
 

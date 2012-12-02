@@ -31,6 +31,8 @@ sub call {
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	my $entry = XML::Atom::Entry->new();
+
+	$self->populate_entry($entry, $request);
 	
 	my ($day, $mon, $year) = (localtime $self->{page}->modification_time)[3..5];
 	$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
@@ -46,16 +48,8 @@ sub call {
 		$entry->content->elem->appendChild($node);
 	}
 
-	unless ($self->{hub}->name eq 'index')	{
-	    my $link = XML::Atom::Link->new();
-	    $link->type('text/html');
-	    $link->title($self->{hub}->{dir}->name);
-	    $link->rel('up');
-	    $link->href($self->{hub}->{dir}->uri);
-	    $entry->add_link($link);
-	}
+	$self->{hub}->{dir}->populate_siblings($entry, $self->{hub}->name);
 	
-	$self->populate_entry($entry, $request);
 	if ($request->param('type') and $request->param('type') eq 'atom') {
 		return [200, ['Content-type', 'text/plain'], ["page: " . $self->{hub}->name . "\n\n" . $entry->as_xml]];
 	}
