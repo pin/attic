@@ -2,23 +2,20 @@
   xmlns:atom="http://www.w3.org/2005/Atom">
 
 <xsl:template name="common-html-head-tags">
-  <!-- script>
-    //alert('aaa');
-  </script -->
-  <!-- script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js"></script -->
+  <link href="https://raw.github.com/olton/Metro-UI-CSS/master/css/modern.css" rel="stylesheet"/>
   <style>
 body {
-        font-family: serif;
-        font-size: 1em;
+  font-family: serif;
+  font-size: 1em;
 }
 h1, h2, h3 {
-        font-weight: lighter;
+  font-weight: lighter;
 }
   </style>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
-  <link rel="{@rel}" href="{@href}"/>
+  <link rel="{@rel}" href="{@href}" class="navigation"/>
 </xsl:template>
 
 </xsl:stylesheet>

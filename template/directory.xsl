@@ -15,6 +15,7 @@ ul.links li { display: inline }
 ul.links li:after { content: "," } 
 ul.links li:last-child:after { content: "" }
       </style>
+      <link href="https://raw.github.com/olton/Metro-UI-CSS/master/css/modern.css" rel="stylesheet"/>
     </head>
     <body>
       <h1><xsl:value-of select="atom:title"/></h1>
