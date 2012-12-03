@@ -66,4 +66,20 @@ sub populate_entry {
 	shift->{impl}->populate_entry(@_);
 }
 
+sub parent_link {
+	my $self = shift;
+	return $self->{dir}->parent_link if $self->{name} eq 'index';
+	my $inline = XML::Atom::Ext::Inline->new();
+	my $feed = XML::Atom::Feed->new();
+	$feed->add_link($self->{dir}->parent_link);
+	$feed->title($self->{dir}->name);
+	$inline->atom($feed);
+	my $link = XML::Atom::Link->new();
+	$link->href($self->{dir}->uri);
+	$link->rel('up');
+	$link->type('text/html');
+	$link->inline($inline);
+	return $link;
+}
+
 1;

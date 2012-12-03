@@ -11,15 +11,11 @@
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
     </head>
     <body>
+      <xsl:call-template name="top-navigatoin-bar"/>
       <h1><xsl:value-of select="atom:title"/></h1>
-      <xsl:apply-templates select="atom:link[@rel='index']"/>
       <div><xsl:copy-of select="atom:content"/></div>
     </body>
   </html>
-</xsl:template>
-
-<xsl:template match="atom:link[@rel='index']">
-  <blockquote>from <a href="{@href}"><xsl:value-of select="@title"/></a></blockquote>
 </xsl:template>
 
 </xsl:stylesheet>

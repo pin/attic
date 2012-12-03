@@ -11,14 +11,18 @@
       <xsl:call-template name="common-html-head-tags"/>
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
+      <style>
+aimg.main { margin-top: 2em }
+      </style>
     </head>
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
-      <h1><xsl:value-of select="atom:title"/></h1>
+      <h1 style="margin-bottom: 0.5em"><xsl:value-of select="atom:title"/></h1>
+      
       <figure style="imargin: 0em;">
-        <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?px=1000" style="idisplay: inline-block; float: left; margin-bottom: 1em; margin-right: 1em"/>
-        <figcaption style="idisplay: inline-block; ivertical-align: top">
-          <!-- <xsl:call-template name="date"/>  --> 
+        <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?px=1000" style="display: inline-block; float: left; margin-bottom: 1em; margin-right: 1em"/>
+        <figcaption style="display: inline-block; vertical-align: top">
+          <xsl:call-template name="date"/> 
         </figcaption>
       </figure>
     </body>

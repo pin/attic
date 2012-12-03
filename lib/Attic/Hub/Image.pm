@@ -64,6 +64,8 @@ sub call {
     	$entry->set($dc_ns, 'description', $dc_description);
 	}
 
+	$entry->add_link($self->{hub}->parent_link);
+
 	if ($request->param('type') and $request->param('type') eq 'atom') {
 		return [200, ['Content-type', 'text/xml'], [$entry->as_xml]];
 	}

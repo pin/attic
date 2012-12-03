@@ -7,10 +7,7 @@
   <html>
     <head>
       <title><xsl:value-of select="atom:title"/></title>
-    <xsl:call-template name="common-html-head-tags"/>
-    <link href="http://metroui.org.ua/css/modern.css" rel="stylesheet"/>
-    <link href="http://metroui.org.ua/css/modern-responsive.css" rel="stylesheet"/>
-
+      <xsl:call-template name="common-html-head-tags"/>
       <style type="text/css">
 img.th { margin: 0.5em }
 ul.links { list-style: none; margin: 0; padding: 0; display: inline }

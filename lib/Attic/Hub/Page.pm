@@ -49,6 +49,7 @@ sub call {
 	}
 
 	$self->{hub}->{dir}->populate_siblings($entry, $self->{hub}->name);
+	$entry->add_link($self->{hub}->parent_link);
 	
 	if ($request->param('type') and $request->param('type') eq 'atom') {
 		return [200, ['Content-type', 'text/plain'], ["page: " . $self->{hub}->name . "\n\n" . $entry->as_xml]];

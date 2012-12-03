@@ -14,6 +14,7 @@ use Fcntl ':mode';
 use Attic::Hub;
 use XML::Atom::Feed; $XML::Atom::DefaultVersion = '1.0';
 use URI;
+use XML::Atom::Ext::Inline;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -154,6 +155,34 @@ sub populate_siblings {
 	}
 }
 
+sub parent_link {
+	my $self = shift;
+	my $uri = $self->uri;
+	my ($parent_uri, $name) = $self->pop_name($uri);
+	return undef unless $parent_uri;
+	my $parent_dir = $self->{router}->directory($parent_uri);
+	my $inline = XML::Atom::Ext::Inline->new();
+	my $feed = XML::Atom::Feed->new();
+	if (my $parent_link = $parent_dir->parent_link) {
+		$feed->add_link($parent_link);
+	}
+	$feed->title($parent_dir->name) if $parent_dir->name;
+	{
+		my $link = XML::Atom::Link->new();
+		$link->href($parent_dir->uri);
+		$link->rel('self');
+		$link->type('text/html');
+		$feed->add_link($link);
+	}
+	$inline->atom($feed);
+	my $link = XML::Atom::Link->new();
+	$link->href($parent_uri);
+	$link->rel('up');
+	$link->type('text/html');
+	$link->inline($inline);
+	return $link;
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
@@ -187,6 +216,9 @@ sub call {
 
 				$e->populate_entry($entry, $env);
 				$feed->add_entry($entry);
+			}
+			if (my $parent_link = $self->parent_link) {
+				$feed->add_link($parent_link);
 			}
 			if ($request->param('type') and $request->param('type') eq 'atom') {
 				return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
