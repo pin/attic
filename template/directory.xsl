@@ -3,24 +3,27 @@
 
 <xsl:include href="config.xsl"/>
 
-<xsl:template match="/atom:feed">
+<xsl:template match="atom:feed">
   <html>
     <head>
       <title><xsl:value-of select="atom:title"/></title>
-      <xsl:call-template name="common-html-head-tags"/>
-      <style>
+    <xsl:call-template name="common-html-head-tags"/>
+    <link href="http://metroui.org.ua/css/modern.css" rel="stylesheet"/>
+    <link href="http://metroui.org.ua/css/modern-responsive.css" rel="stylesheet"/>
+
+      <style type="text/css">
 img.th { margin: 0.5em }
 ul.links { list-style: none; margin: 0; padding: 0; display: inline }
 ul.links li { display: inline }
 ul.links li:after { content: "," } 
 ul.links li:last-child:after { content: "" }
       </style>
-      <link href="https://raw.github.com/olton/Metro-UI-CSS/master/css/modern.css" rel="stylesheet"/>
     </head>
     <body>
+      <xsl:call-template name="top-navigatoin-bar"/>
       <h1><xsl:value-of select="atom:title"/></h1>
       <xsl:if test="atom:entry[atom:category/@term='image']">
-        <div style="margin-top: 2em; background-coloar: lightgrey">
+        <div style="margin-top: 2em">
           <!-- h2>Images:</h2>  -->
           <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
         </div>
@@ -34,8 +37,7 @@ ul.links li:last-child:after { content: "" }
           </ul>
         </div>
       </xsl:if>
-
-    </body>
+     </body>
   </html>
 </xsl:template>
 
