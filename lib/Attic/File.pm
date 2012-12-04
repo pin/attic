@@ -79,11 +79,24 @@ sub xmp_param {
 	}
 }
 
+my @size_step = (300, 600, 800, 1000, 1200);
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
-	if (my $px = $request->uri->query_param('px')) {
+	my $px = $size_step[0];
+	if (my $size = $request->uri->query_param('size')) {
+		if (my $resolution = $request->cookies->{'resolution'} and $size eq 'large') {
+			foreach my $s (@size_step) {
+				if ($resolution > $s) {
+					$px = $s;
+				}
+			}
+		}
+	}
+	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
+	if ($px) {
 		if ($px > 1200) {
 			my $uri = $request->uri;
 			$uri->query_param('px', 1200);
