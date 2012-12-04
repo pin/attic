@@ -7,6 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link href="/css/modern-responsive.css" type="text/css" rel="stylesheet"/>
   <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js" type="text/javascript"></script>
+  <script type="text/javascript"><![CDATA[
+document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
+  ]]></script>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
@@ -16,7 +19,7 @@
 <xsl:template name="top-navigatoin-bar">
   <div class="nav-bar bg-color-blueDark">
     <div class="nav-bar-inner">
-      <span class="pull-menu" style="float: left; margin-left: 0.3em; margin-top: 1px;"></span>
+      <!-- <span class="pull-menu" style="font-size: 17pt; float: left; margin-left: 0.3em; margin-top: 1px;"></span>  -->
       <a href="#" class="brand"><span class="element brand"></span></a>
       <script type="text/javascript"><![CDATA[
 YUI().use('node', function (Y) {
@@ -55,9 +58,6 @@ YUI().use('node', function (Y) {
 <xsl:template match="atom:link" mode="navigation-link">
   <xsl:param name="icon"/>
   <a href="{@href}"><span class="element {$icon} icon-large" style="float: right; margin-top: 11px; margin-bottom: 0"/></a>
-  <!-- <a href="{@href}"><button class="big" style="float: right; margin-top: 4px"><i class="{$icon}"/></button></a> -->
-  <!-- <a href="{@href}"><span class="element {$icon}" style="float: right; margin-top: 4px"/></a>  -->
-  <!-- <a href="{@href}"><span class="element brand" style="float: right"><xsl:value-of select="@rel"/></span></a> -->
 </xsl:template>
 
 <xsl:template match="atom:link[@rel='up']" mode="navigation-link">
