@@ -12,8 +12,10 @@
     </head>
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
-      <h1><xsl:value-of select="atom:title"/></h1>
-      <div><xsl:copy-of select="atom:content"/></div>
+      <div class="page">
+        <h1><xsl:value-of select="atom:title"/></h1>
+        <div><xsl:copy-of select="atom:content"/></div>
+      </div>
     </body>
   </html>
 </xsl:template>

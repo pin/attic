@@ -9,7 +9,7 @@
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:call-template name="common-html-head-tags"/>
       <style type="text/css">
-img.th { margin: 0.5em }
+img.th { margin-right: 0.2em; margin-bottom: 0.2em }
 ul.links { list-style: none; margin: 0; padding: 0; display: inline }
 ul.links li { display: inline }
 ul.links li:after { content: "," } 
@@ -18,23 +18,24 @@ ul.links li:last-child:after { content: "" }
     </head>
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
-      <h1><xsl:value-of select="atom:title"/></h1>
-      <xsl:if test="atom:entry[atom:category/@term='image']">
-        <div style="margin-top: 2em">
-          <!-- h2>Images:</h2>  -->
-          <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
-        </div>
-      </xsl:if>
-
-      <xsl:if test="atom:entry[atom:category/@term='directory']">
-        <div>
-          <h2>Directories:</h2>
-          <ul class="links"> 
-            <xsl:apply-templates select="atom:entry[atom:category/@term='directory']"/>
-          </ul>
-        </div>
-      </xsl:if>
-     </body>
+      <div class="page">
+        <h2><xsl:value-of select="atom:title"/></h2>
+        <xsl:if test="atom:entry[atom:category/@term='image']">
+          <div>
+            <!-- h2>Images:</h2>  -->
+            <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
+          </div>
+        </xsl:if>
+        <xsl:if test="atom:entry[atom:category/@term='directory']">
+          <div>
+            <h2>Directories:</h2>
+            <ul class="links"> 
+              <xsl:apply-templates select="atom:entry[atom:category/@term='directory']"/>
+            </ul>
+          </div>
+        </xsl:if>
+      </div>
+    </body>
   </html>
 </xsl:template>
 

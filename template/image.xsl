@@ -11,17 +11,26 @@
       <xsl:call-template name="common-html-head-tags"/>
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
+      <style type="text/css">
+img.main {
+  margin-right: 0.2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+      </style>
     </head>
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
       <div class="page">
-      <h1 style="margin-bottom: 0.5em"><xsl:value-of select="atom:title"/></h1>
-      <figure style="imargin: 0em;">
-        <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
-        <figcaption style="display: inline-block; vertical-align: top">
-          <xsl:call-template name="date"/> 
-        </figcaption>
-      </figure>
+        <h2><xsl:value-of select="atom:title"/></h2>
+        <figure style="display: block;   margin-left: auto;   margin-right: auto;">
+          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
+          <figcaption style="display: inline-block; vertical-align: top">
+            <p><xsl:call-template name="date"/></p>
+            <div><xsl:value-of select="exif:camera"/></div>
+            <div><xsl:value-of select="exif:lens"/></div>
+          </figcaption>
+        </figure>
       </div>
     </body>
   </html>

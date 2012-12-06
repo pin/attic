@@ -10,6 +10,19 @@
   <script type="text/javascript"><![CDATA[
 document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
   ]]></script>
+  <script type="text/javascript"><![CDATA[
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    window.scrollTo(0, 1);
+  }, 0);
+});
+  ]]></script>
+  <style>
+.page {
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+  </style>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
@@ -17,21 +30,22 @@ document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; pat
 </xsl:template>
 
 <xsl:template name="top-navigatoin-bar">
-  <div class="nav-bar bg-color-blueDark">
+  <div class="nav-bar bg-color-white">
     <div class="nav-bar-inner">
       <!-- <span class="pull-menu" style="font-size: 17pt; float: left; margin-left: 0.3em; margin-top: 1px;"></span>  -->
-      <a href="#" class="brand"><span class="element brand"></span></a>
+      <a href="#" class="brand"><span class="element brand" style="font-size: 16pt; margin-top: 5px;"></span></a>
       <script type="text/javascript"><![CDATA[
 YUI().use('node', function (Y) {
   var t = document.URL.split('/');
   Y.one('a.brand').setAttribute('href', t[0] + '//' + t[2]);
   var h = location.hostname.split('.');
   if (h.length > 2) {
-    Y.one('span.brand').append(h[0]);
+    //Y.one('span.brand').append(h[0]);
   }
   else {
-    Y.one('span.brand').append(location.hostname);
+    //Y.one('span.brand').append(location.hostname);
   }
+  Y.one('span.brand').append('popov.org');
 });
       ]]></script>
       <xsl:apply-templates select="atom:link[@rel='next']" mode="navigation-link">
@@ -57,13 +71,13 @@ YUI().use('node', function (Y) {
 
 <xsl:template match="atom:link" mode="navigation-link">
   <xsl:param name="icon"/>
-  <a href="{@href}"><span class="element {$icon} icon-large" style="float: right; margin-top: 11px; margin-bottom: 0"/></a>
+  <a href="{@href}"><span class="element {$icon} icon-large" style="font-size: 12pt; color: lightGrey !important; float: right; margin-top: 11px; margin-bottom: 0; margin-right: 0.5em"/></a>
 </xsl:template>
 
 <xsl:template match="atom:link[@rel='up']" mode="navigation-link">
   <xsl:if test="ae:inline/atom:feed/atom:title">
     <xsl:apply-templates select="ae:inline/atom:feed/atom:link[@rel='up']" mode="navigation-link"/>
-    <li><a href="{@href}"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a></li>
+    <li><a href="{@href}" style="font-size: 12pt"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a></li>
   </xsl:if>
 </xsl:template>
 

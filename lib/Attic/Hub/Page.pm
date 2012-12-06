@@ -41,7 +41,17 @@ sub call {
 	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
 		$entry->updated($date);
 	}
-	$entry->title($html_doc->findvalue('/html/body/h1') || $self->{hub}->name);
+	
+	if (my $h1 = $html_doc->findvalue('/html/body/h1')) {
+		$entry->title($h1);
+	}
+	elsif (my $title = $html_doc->findvalue('/html/head/title')) {
+		$entry->title($title);
+	}
+	elsif ($self->{hub}->name ne 'index') {
+		$entry->title($self->{hub}->name);
+	}
+	
 	$entry->content(XML::Atom::Content->new());
 	foreach my $node ($html_doc->find('/html/body')->[0]->childNodes) {
 		next if $node->nodeName eq 'h1';

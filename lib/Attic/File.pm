@@ -79,7 +79,7 @@ sub xmp_param {
 	}
 }
 
-my @size_step = (300, 600, 800, 1000, 1200);
+my @size_step = (300, 600, 800, 1000);
 
 sub call {
 	my $self = shift;
