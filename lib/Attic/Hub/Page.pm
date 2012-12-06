@@ -37,7 +37,7 @@ sub call {
 	my ($day, $mon, $year) = (localtime $self->{page}->modification_time)[3..5];
 	$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 	
-	my $html_doc = XML::LibXML->load_html(location => $self->{page}->path);
+	my $html_doc = XML::LibXML->load_html(location => $self->{page}->path, recover => 2);
 	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
 		$entry->updated($date);
 	}
