@@ -97,9 +97,9 @@ sub call {
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
-		if ($px > 1200) {
+		if ($px > 1000) {
 			my $uri = $request->uri;
-			$uri->query_param('px', 1200);
+			$uri->query_param('px', 1000);
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
 		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $px, $self->{name});
@@ -144,7 +144,7 @@ sub call {
 		}
 	}
 	my $uri = $request->uri;
-	$uri->query_param_append('px', 1200);
+	$uri->query_param_append('px', 1000);
 	return [301, ['Location' => $uri], ["follow $uri"]];
 #	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
 #	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
