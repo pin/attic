@@ -7,6 +7,7 @@ use Attic::Router;
 use Log::Log4perl qw(:easy);
 use Attic::Config;
 use Plack::Builder;
+use FindBin;
 
 my $log_conf = q(
 	log4perl.rootLogger = DEBUG, console
@@ -21,6 +22,6 @@ my $dir = Attic::Router->new(home_dir => Attic::Config->value('documents_dir'));
 my $app = $dir->to_app;
 
 builder {
-	enable "Plack::Middleware::Static", path => qr{^/(images|js|css|fonts)/}, root => Attic::Config->value('metro_ui_htdocs');
+	enable "Plack::Middleware::Static", path => qr{^/(images|js|css|fonts)/}, root => File::Spec->catdir($FindBin::Bin, 'static');
 	$app;
 };

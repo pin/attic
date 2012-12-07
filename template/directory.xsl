@@ -18,23 +18,21 @@ ul.links li:last-child:after { content: "" }
     </head>
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
-      <div class="page">
-        <h2><xsl:value-of select="atom:title"/></h2>
-        <xsl:if test="atom:entry[atom:category/@term='image']">
-          <div>
-            <!-- h2>Images:</h2>  -->
-            <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
-          </div>
-        </xsl:if>
-        <xsl:if test="atom:entry[atom:category/@term='directory']">
-          <div>
-            <h2>Directories:</h2>
-            <ul class="links"> 
-              <xsl:apply-templates select="atom:entry[atom:category/@term='directory']"/>
-            </ul>
-          </div>
-        </xsl:if>
-      </div>
+      <h1><xsl:value-of select="atom:title"/></h1>
+      <xsl:if test="atom:entry[atom:category/@term='image']">
+        <p>
+          <!-- h2>Images:</h2>  -->
+          <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
+        </p>
+      </xsl:if>
+      <xsl:if test="atom:entry[atom:category/@term='directory']">
+        <div>
+          <h2>Directories:</h2>
+          <ul class="links"> 
+            <xsl:apply-templates select="atom:entry[atom:category/@term='directory']"/>
+          </ul>
+        </div>
+      </xsl:if>
     </body>
   </html>
 </xsl:template>

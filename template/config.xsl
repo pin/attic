@@ -3,9 +3,6 @@
   xmlns:ae="http://purl.org/atom/ext/">
 
 <xsl:template name="common-html-head-tags">
-  <link href="/css/modern.css" type="text/css" rel="stylesheet"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link href="/css/modern-responsive.css" type="text/css" rel="stylesheet"/>
   <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js" type="text/javascript"></script>
   <script type="text/javascript"><![CDATA[
 document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
@@ -18,9 +15,37 @@ window.addEventListener('load', function() {
 });
   ]]></script>
   <style>
-.page {
-  margin-left: 0.2em;
-  margin-right: 0.2em;
+@import url("/css/main.css");
+@import url("/css/phone.css") (max-width: 800px);
+div.navigation-bar, h1  {
+  display: inline;
+  font-size: 16pt;
+}
+div.navigation-bar:after {
+  content: "&gt;"
+}
+.tile {
+  padding: 10px 15px;
+  background: #EEE;
+  acolor: #FFF;
+  text-decoration: none;
+  font-size: 16pt;
+}
+.abottom-navigation-bar {
+  position: fixed;
+  bottom: 0px;
+  right: 10px;
+  font-size: 16pt;
+}
+a.previous, a.next {
+  position: fixed;
+  top: 50%;
+}
+a.previous {
+  left: 1px;
+}
+a.next {
+  right: 1px;
 }
   </style>
 </xsl:template>
@@ -30,11 +55,9 @@ window.addEventListener('load', function() {
 </xsl:template>
 
 <xsl:template name="top-navigatoin-bar">
-  <div class="nav-bar bg-color-white">
-    <div class="nav-bar-inner">
-      <!-- <span class="pull-menu" style="font-size: 17pt; float: left; margin-left: 0.3em; margin-top: 1px;"></span>  -->
-      <a href="#" class="brand"><span class="element brand" style="font-size: 16pt; margin-top: 5px;"></span></a>
-      <script type="text/javascript"><![CDATA[
+  <div class="navigation-bar">
+    <a href="#" class="brand tile"><span class="element brand" style="font-size: 16pt;"></span></a>
+    <script type="text/javascript"><![CDATA[
 YUI().use('node', function (Y) {
   var t = document.URL.split('/');
   Y.one('a.brand').setAttribute('href', t[0] + '//' + t[2]);
@@ -47,37 +70,31 @@ YUI().use('node', function (Y) {
   }
   Y.one('span.brand').append('popov.org');
 });
-      ]]></script>
-      <xsl:apply-templates select="atom:link[@rel='next']" mode="navigation-link">
-        <xsl:with-param name="icon" select="'icon-arrow-right'"/>
-      </xsl:apply-templates>
-      <xsl:apply-templates select="atom:link[@rel='index']" mode="navigation-link">
-        <xsl:with-param name="icon" select="'icon-grid-view'"/>
-      </xsl:apply-templates>
-      <xsl:apply-templates select="atom:link[@rel='previous']" mode="navigation-link">
-        <xsl:with-param name="icon" select="'icon-arrow-left'"/>
-      </xsl:apply-templates>
-      <xsl:if test="atom:link[@rel='up']/ae:inline/atom:feed/atom:title">
-        <span class="divider"/>
-      </xsl:if>
-      <ul class="menu">
-        <xsl:apply-templates select="atom:link[@rel='up']" mode="navigation-link"/>
-      </ul>
-    </div>
+    ]]></script>
+    <xsl:apply-templates select="atom:link[@rel='up']" mode="navigation-link"/>
   </div>
-  <script src="/js/assets/jquery-1.8.2.min.js"></script>
-  <script src="/js/modern/dropdown.js"></script>
+  <xsl:apply-templates select="atom:link[@rel='previous']" mode="navigation-link">
+    <xsl:with-param name="label" select="'&lt;'"/>
+  </xsl:apply-templates>
+<!--
+  <xsl:apply-templates select="atom:link[@rel='index']" mode="navigation-link">
+    <xsl:with-param name="label" select="'icon-grid-view'"/>
+  </xsl:apply-templates>
+-->
+  <xsl:apply-templates select="atom:link[@rel='next']" mode="navigation-link">
+    <xsl:with-param name="label" select="'&gt;'"/>
+  </xsl:apply-templates>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="navigation-link">
-  <xsl:param name="icon"/>
-  <a href="{@href}"><span class="element {$icon} icon-large" style="font-size: 12pt; color: lightGrey !important; float: right; margin-top: 11px; margin-bottom: 0; margin-right: 0.5em"/></a>
+  <xsl:param name="label"/>
+  <a href="{@href}" class="tile {@rel}" style="font-size: 20pt;"><xsl:value-of select="$label"/><!-- <xsl:value-of select="@rel"/>  --></a>
 </xsl:template>
-
+ 
 <xsl:template match="atom:link[@rel='up']" mode="navigation-link">
   <xsl:if test="ae:inline/atom:feed/atom:title">
     <xsl:apply-templates select="ae:inline/atom:feed/atom:link[@rel='up']" mode="navigation-link"/>
-    <li><a href="{@href}" style="font-size: 12pt"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a></li>
+    &gt; <a href="{@href}" class="tile"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a>
   </xsl:if>
 </xsl:template>
 

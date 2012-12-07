@@ -33,3 +33,8 @@ install:
 	install -m644 lib/Attic/Hub/Image.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
 	install -m644 lib/Attic/Hub/None.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
 	install -m644 lib/Attic/Hub/Page.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
+
+	install -d $(DESTDIR)/usr/lib/attic/static/
+	install -d $(DESTDIR)/usr/lib/attic/static/css/
+	install -m664 static/css/main.css $(DESTDIR)/usr/lib/attic/static/css/
+	install -m664 static/css/phone.css $(DESTDIR)/usr/lib/attic/static/css/

@@ -17,7 +17,7 @@ sub modification_time {
 sub populate_entry {
 	my $self = shift;
 	my ($entry, $request) = @_;
-#	$entry->title($self->{hub}->name);
+	$entry->title($self->{hub}->name);
 
 	my $category = XML::Atom::Category->new();
 	$category->term('image');
