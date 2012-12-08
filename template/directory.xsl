@@ -9,7 +9,6 @@
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:call-template name="common-html-head-tags"/>
       <style type="text/css">
-img.th { margin-right: 0.2em; margin-bottom: 0.2em }
 ul.links { list-style: none; margin: 0; padding: 0; display: inline }
 ul.links li { display: inline }
 ul.links li:after { content: "," } 

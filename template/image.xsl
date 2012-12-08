@@ -13,15 +13,7 @@
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
       <style type="text/css">
-img.main {
-  margin-right: 1em;
-  margin-top: 0.2em;
-  margin-bottom: 0.2em;
-}
-figure {
-  margin-left: 4em;
-  margin-top: 2em;
-}
+
       </style>
     </head>
     <body>

@@ -8,3 +8,27 @@ h1 {
 	font-weight: 100;
 }
 
+img.main {
+	margin-right: 1em;
+	margin-top: 0.2em;
+	margin-bottom: 0.2em;
+}
+
+img.th {
+	margin-right: 0.2em;
+	margin-bottom: 0.2em
+}
+
+figure {
+	margin-left: 4em;
+	margin-top: 2em;
+}
+
+div.navigation-bar, h1  {
+	display: inline;
+	font-size: 16pt;
+}
+
+div.navigation-bar:after {
+	content: "/"
+}

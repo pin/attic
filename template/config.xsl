@@ -17,28 +17,9 @@ window.addEventListener('load', function() {
   <style>
 @import url("/css/main.css");
 @import url("/css/phone.css") (max-width: 800px);
-div.navigation-bar, h1  {
-  display: inline;
-  font-size: 16pt;
-}
-div.navigation-bar:after {
-  content: "&gt;"
-}
-.tile {
-  padding: 10px 15px;
-  background: #EEE;
-  acolor: #FFF;
-  text-decoration: none;
-  font-size: 16pt;
-}
-.abottom-navigation-bar {
-  position: fixed;
-  bottom: 0px;
-  right: 10px;
-  font-size: 16pt;
-}
 a.previous, a.next {
   position: fixed;
+  display: none;
   top: 50%;
 }
 a.previous {
@@ -48,6 +29,7 @@ a.next {
   right: 1px;
 }
   </style>
+  <meta name="viewport" content="width=device-width"/>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
@@ -56,7 +38,7 @@ a.next {
 
 <xsl:template name="top-navigatoin-bar">
   <div class="navigation-bar">
-    <a href="#" class="brand tile"><span class="element brand" style="font-size: 16pt;"></span></a>
+    <a href="#" class="brand"><span class="brand"></span></a>
     <script type="text/javascript"><![CDATA[
 YUI().use('node', function (Y) {
   var t = document.URL.split('/');
@@ -88,13 +70,13 @@ YUI().use('node', function (Y) {
 
 <xsl:template match="atom:link" mode="navigation-link">
   <xsl:param name="label"/>
-  <a href="{@href}" class="tile {@rel}" style="font-size: 20pt;"><xsl:value-of select="$label"/><!-- <xsl:value-of select="@rel"/>  --></a>
+  <a href="{@href}" class="{@rel}" style="font-size: 20pt;"><xsl:value-of select="$label"/><!-- <xsl:value-of select="@rel"/>  --></a>
 </xsl:template>
  
 <xsl:template match="atom:link[@rel='up']" mode="navigation-link">
   <xsl:if test="ae:inline/atom:feed/atom:title">
     <xsl:apply-templates select="ae:inline/atom:feed/atom:link[@rel='up']" mode="navigation-link"/>
-    &gt; <a href="{@href}" class="tile"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a>
+    / <a href="{@href}"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a>
   </xsl:if>
 </xsl:template>
 
