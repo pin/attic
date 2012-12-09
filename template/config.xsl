@@ -5,8 +5,13 @@
 <xsl:template name="common-html-head-tags">
   <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js" type="text/javascript"></script>
   <script type="text/javascript"><![CDATA[
-  //document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
-  document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
+YUI().use('event', function (Y) {
+  Y.on('domready', function (e) {
+    document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
+    document.cookie = 'clientHeight=' + document.body.clientHeight + '; path=/';
+    document.cookie = 'clientWidth=' + document.body.clientWidth + '; path=/';
+  });
+});
   ]]></script>
   <script type="text/javascript"><![CDATA[
 window.addEventListener('load', function() {
@@ -53,6 +58,8 @@ var stdImageWidth = [300, 450, 600, 800, 1000, 1200];
 YUI().use('node', function (Y) {
   window.addEventListener("orientationchange", function() {
     document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
+    document.cookie = 'clientHeight=' + document.body.clientHeight + '; path=/';
+    document.cookie = 'clientWidth=' + document.body.clientWidth + '; path=/';
     var width = document.body.clientWidth;
     var w = 300;
     stdImageWidth.forEach(function(stdWidth) {

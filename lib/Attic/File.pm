@@ -59,6 +59,13 @@ sub exif {
 	return $et->GetInfo({Group0 => ['EXIF', 'MakerNotes']});
 }
 
+sub et {
+	my $self = shift;
+	my $et = Image::ExifTool->new();
+	$et->ExtractInfo($self->path) or return undef;
+	return $et;
+}
+
 sub xmp_param {
 	my $self = shift;
 	my ($ns, $key, $value) = @_;
@@ -79,32 +86,75 @@ sub xmp_param {
 	}
 }
 
-my @size_step = (300, 450, 600, 800, 1000);
+my @size_step = (300, 450, 600, 800, 1000, 1200);
+sub calculate_px {
+	my $self = shift;
+	my ($clientWidth, $clientHeight) = @_;
+	$log->debug("calculate_px: clientWidth=$clientWidth, clientHeight=$clientHeight");
+	my $et = $self->et or return undef;
+	my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation#');
+	my ($imageWidth, $imageHeight, $orientation) = ($i->{ImageWidth}, $i->{ImageHeight}, $i->{Orientation});
+	($imageHeight, $imageWidth) = ($imageWidth, $imageHeight) if $orientation and $orientation > 4;
+	$log->debug($self->path . ": imageWidth=$imageWidth, imageHeight=$imageHeight");
+	my $px = $size_step[0];
+	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
+		foreach my $s (@size_step) {
+			if ($clientHeight > $s) {
+				$px = $s;
+			}
+			else {
+				last;
+			}
+		}
+		if ($imageWidth > $imageHeight) {
+			$px = $imageWidth / $imageHeight * $px;
+		}
+	}
+	else {
+		foreach my $s (@size_step) {
+			if ($clientWidth > $s) {
+				$px = $s;
+			}
+			else {
+				last;
+			}
+		}
+	}
+	$log->debug("px: $px");
+	return $px;
+}
 
 sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	my $px = $size_step[0];
-	if (my $size = $request->uri->query_param('size')) {
-		if (my $resolution = $request->cookies->{'resolution'} and $size eq 'large') {
-			foreach my $s (@size_step) {
-				if ($resolution > $s) {
-					$px = $s;
-				}
-			}
-			$log->debug("got size=$size query param and resolution=$resolution -> px=$px selected");
+	if (my $size = $request->uri->query_param('size') and my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
+		if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
+			$px = $c_px;
 		}
-		else {
-			$px = 600;
-			$log->debug("got size=$size query param no resolution cookie -> px=$px");
-		}
+#		if (my $resolution = $request->cookies->{'resolution'} and $size eq 'large') {
+#			if (my $et = $self->et) {
+#				my $i = $et->GetInfo('ImageWidth', 'ImageHeight');
+#				die Dumper($i);
+#			}
+#			foreach my $s (@size_step) {
+#				if ($resolution > $s) {
+#					$px = $s;
+#				}
+#			}
+#			$log->debug("got size=$size query param and resolution=$resolution -> px=$px selected");
+#		}
+#		else {
+#			$px = 600;
+#			$log->debug("got size=$size query param no resolution cookie -> px=$px");
+#		}
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
-		if ($px > 1000) {
+		if ($px > 1200) {
 			my $uri = $request->uri;
-			$uri->query_param('px', 1000);
+			$uri->query_param('px', 1200);
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
 		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $px, $self->{name});
@@ -149,7 +199,7 @@ sub call {
 		}
 	}
 	my $uri = $request->uri;
-	$uri->query_param_append('px', 1000);
+	$uri->query_param_append('size', 'large');
 	return [301, ['Location' => $uri], ["follow $uri"]];
 #	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
 #	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
