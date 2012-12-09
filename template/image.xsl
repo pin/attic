@@ -17,8 +17,10 @@
       </style>
     </head>
     <body>
-      <xsl:call-template name="top-navigatoin-bar"/>
-      <h1><xsl:value-of select="atom:title"/></h1>
+      <div>
+        <xsl:call-template name="top-navigatoin-bar"/>
+        <h1><xsl:value-of select="atom:title"/></h1>
+      </div>
       <figure>
         <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
         <figcaption style="display: inline-block; vertical-align: top">

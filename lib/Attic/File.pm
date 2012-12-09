@@ -79,7 +79,7 @@ sub xmp_param {
 	}
 }
 
-my @size_step = (300, 600, 800, 1000);
+my @size_step = (300, 450, 600, 800, 1000);
 
 sub call {
 	my $self = shift;
@@ -93,6 +93,11 @@ sub call {
 					$px = $s;
 				}
 			}
+			$log->debug("got size=$size query param and resolution=$resolution -> px=$px selected");
+		}
+		else {
+			$px = 600;
+			$log->debug("got size=$size query param no resolution cookie -> px=$px");
 		}
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');

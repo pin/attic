@@ -5,7 +5,8 @@
 <xsl:template name="common-html-head-tags">
   <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js" type="text/javascript"></script>
   <script type="text/javascript"><![CDATA[
-document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
+  //document.cookie = 'resolution=' + Math.max(screen.width, screen.height) + '; path=/';
+  document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
   ]]></script>
   <script type="text/javascript"><![CDATA[
 window.addEventListener('load', function() {
@@ -16,7 +17,7 @@ window.addEventListener('load', function() {
   ]]></script>
   <style>
 @import url("/css/main.css");
-@import url("/css/phone.css") (max-width: 800px);
+@import url("/css/phone.css") (max-width: 600px);
 a.previous, a.next {
   position: fixed;
   display: none;
@@ -29,7 +30,45 @@ a.next {
   right: 1px;
 }
   </style>
-  <meta name="viewport" content="width=device-width"/>
+  <script type="text/javascript"><![CDATA[
+(function(doc) {
+  var addEvent = 'addEventListener',
+      type = 'gesturestart',
+      qsa = 'querySelectorAll',
+      scales = [1, 1],
+      meta = qsa in doc ? doc[qsa]('meta[name=viewport]') : [];
+  function fix() {
+    meta.content = 'width=device-width,minimum-scale=' + scales[0] + ',maximum-scale=' + scales[1];
+    doc.removeEventListener(type, fix, true);
+  }
+  if ((meta = meta[meta.length - 1]) && addEvent in doc) {
+    fix();
+    scales = [.25, 1.6];
+    doc[addEvent](type, fix, true);
+  }
+}(document));
+  ]]></script>
+  <script type="text/javascript"><![CDATA[
+var stdImageWidth = [300, 450, 600, 800, 1000, 1200];
+YUI().use('node', function (Y) {
+  window.addEventListener("orientationchange", function() {
+    document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
+    var width = document.body.clientWidth;
+    var w = 300;
+    stdImageWidth.forEach(function(stdWidth) {
+      if (width > stdWidth && stdWidth > w) {
+        w = stdWidth;
+      }
+    });
+    var src = Y.one('img.main').getAttribute('src');
+    src = src.replace(/size\=([a-z]+)/, 'px=' + w);
+    src = src.replace(/px\=([0-9]+)/, 'px=' + w);
+    Y.one('img.main').setAttribute('src', src);
+  }, false);
+});
+  ]]></script>
+  <!-- <meta name="viewport" content="width=device-width"/>  -->
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
@@ -45,12 +84,12 @@ YUI().use('node', function (Y) {
   Y.one('a.brand').setAttribute('href', t[0] + '//' + t[2]);
   var h = location.hostname.split('.');
   if (h.length > 2) {
-    //Y.one('span.brand').append(h[0]);
+    Y.one('span.brand').append(h[0]);
   }
   else {
-    //Y.one('span.brand').append(location.hostname);
+    Y.one('span.brand').append(location.hostname);
   }
-  Y.one('span.brand').append('popov.org');
+  //Y.one('span.brand').append('popov.org');
 });
     ]]></script>
     <xsl:apply-templates select="atom:link[@rel='up']" mode="navigation-link"/>
