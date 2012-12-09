@@ -7,7 +7,6 @@
   <script type="text/javascript"><![CDATA[
 YUI().use('event', function (Y) {
   Y.on('domready', function (e) {
-    document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
     document.cookie = 'clientHeight=' + document.body.clientHeight + '; path=/';
     document.cookie = 'clientWidth=' + document.body.clientWidth + '; path=/';
   });
@@ -57,7 +56,6 @@ a.next {
 var stdImageWidth = [300, 450, 600, 800, 1000, 1200];
 YUI().use('node', function (Y) {
   window.addEventListener("orientationchange", function() {
-    document.cookie = 'resolution=' + document.body.clientWidth + '; path=/';
     document.cookie = 'clientHeight=' + document.body.clientHeight + '; path=/';
     document.cookie = 'clientWidth=' + document.body.clientWidth + '; path=/';
     var width = document.body.clientWidth;

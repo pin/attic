@@ -92,10 +92,12 @@ sub calculate_px {
 	my ($clientWidth, $clientHeight) = @_;
 	$log->debug("calculate_px: clientWidth=$clientWidth, clientHeight=$clientHeight");
 	my $et = $self->et or return undef;
-	my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation#');
+	$et->Options(PrintConv => 0);
+	my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation');
 	my ($imageWidth, $imageHeight, $orientation) = ($i->{ImageWidth}, $i->{ImageHeight}, $i->{Orientation});
 	($imageHeight, $imageWidth) = ($imageWidth, $imageHeight) if $orientation and $orientation > 4;
 	$log->debug($self->path . ": imageWidth=$imageWidth, imageHeight=$imageHeight");
+	#$log->debug($self->path . ": orientation=$orientation");
 	my $px = $size_step[0];
 	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
 		foreach my $s (@size_step) {
@@ -106,8 +108,10 @@ sub calculate_px {
 				last;
 			}
 		}
+		$log->debug("image height should be $px");
 		if ($imageWidth > $imageHeight) {
 			$px = $imageWidth / $imageHeight * $px;
+			$log->debug("lanscape image so max aspect should be $px");
 		}
 	}
 	else {
@@ -118,6 +122,11 @@ sub calculate_px {
 			else {
 				last;
 			}
+		}
+		$log->debug("image width should be $px");
+		if ($imageWidth < $imageHeight) {
+			$px = $imageHeight / $imageWidth * $px;
+			$log->debug("portrait image so max aspect should be $px");
 		}
 	}
 	$log->debug("px: $px");
@@ -133,22 +142,6 @@ sub call {
 		if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
 			$px = $c_px;
 		}
-#		if (my $resolution = $request->cookies->{'resolution'} and $size eq 'large') {
-#			if (my $et = $self->et) {
-#				my $i = $et->GetInfo('ImageWidth', 'ImageHeight');
-#				die Dumper($i);
-#			}
-#			foreach my $s (@size_step) {
-#				if ($resolution > $s) {
-#					$px = $s;
-#				}
-#			}
-#			$log->debug("got size=$size query param and resolution=$resolution -> px=$px selected");
-#		}
-#		else {
-#			$px = 600;
-#			$log->debug("got size=$size query param no resolution cookie -> px=$px");
-#		}
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
