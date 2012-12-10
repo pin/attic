@@ -24,7 +24,7 @@ p.exif {
         <h1><xsl:value-of select="atom:title"/></h1>
       </div>
       <figure>
-        <div style="overflow: auto">
+        <div style="aoverflow: auto">
           <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" style="float: left"/>
           <figcaption style="display: inline">
             <xsl:call-template name="date"/>
@@ -34,7 +34,7 @@ p.exif {
             </p>
           </figcaption>
         </div>
-        <hr width="300px" align="left" style="margin-top: 1em"/>
+        <hr width="300px" align="left" style="margin-top: 1em; clear: both"/>
         <div class="copyright-notice">&#169; 1999&#150;2012 Dmitri Popov</div>
       </figure>
     </body>

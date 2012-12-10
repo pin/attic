@@ -15,7 +15,7 @@ my $log = Log::Log4perl->get_logger();
 sub prepare_app {
 	my $self = shift;
 	my $path = $self->{path} or die "missing configuration file path";
-	open my $fh, '<', $path or die "can't read $path: $!";
+	open my $fh, $path or die "can't read $path: $!";
 	while (my $line = <$fh>) {
 		chomp $line;
 		next unless $line;

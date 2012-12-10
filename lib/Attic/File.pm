@@ -134,6 +134,7 @@ sub call {
 	my $px;
 	if (my $size = $request->uri->query_param('size')) {
 		if (my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
+			$clientWidth = $clientWidth - 40 if $clientWidth > 800; # preserve space for figure left margin
 			if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
 				$px = $c_px;
 			}
