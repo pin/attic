@@ -19,6 +19,7 @@ install:
 	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/lighttpd/conf-enabled/attic.conf
 	install -m644 etc/home.conf $(DESTDIR)/etc/attic/
 	install -m644 etc/default.conf $(DESTDIR)/etc/attic/
+	install -m644 etc/legacy.tsv $(DESTDIR)/etc/attic/
 
 	# modules
 	install -d $(DESTDIR)/usr/share/perl5/Attic/
@@ -28,6 +29,7 @@ install:
 	install -m644 lib/Attic/File.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Template.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Config.pm $(DESTDIR)/usr/share/perl5/Attic/
+	install -m644 lib/Attic/Redirect.pm $(DESTDIR)/usr/share/perl5/Attic/
 
 	install -d $(DESTDIR)/usr/share/perl5/Attic/Hub/
 	install -m644 lib/Attic/Hub/Image.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/

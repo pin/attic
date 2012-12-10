@@ -8,6 +8,7 @@ use Log::Log4perl qw(:easy);
 use Attic::Config;
 use Plack::Builder;
 use FindBin;
+use Attic::Redirect;
 
 my $log_conf = q(
 	log4perl.rootLogger = DEBUG, console
@@ -23,5 +24,6 @@ my $app = $dir->to_app;
 
 builder {
 	enable "Plack::Middleware::Static", path => qr{^/(images|js|css|fonts)/}, root => File::Spec->catdir($FindBin::Bin, 'static');
+	enable "+Attic::Redirect", path => Attic::Config->value('legacy_tsv_path');
 	$app;
 };

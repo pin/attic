@@ -2,3 +2,4 @@
 /etc/attic
 /var/cache/attic
 /usr/bin
+/var/log/attic
