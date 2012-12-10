@@ -80,7 +80,7 @@ sub xmp_param {
 	}
 }
 
-my @size_step = (300, 450, 600, 800, 1000, 1200);
+my @size_step = (300, 350, 450, 600, 800, 1000, 1200);
 sub calculate_px {
 	my $self = shift;
 	my ($clientWidth, $clientHeight) = @_;
@@ -131,7 +131,7 @@ sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
-	my $px = $size_step[0];
+	my $px;
 	if (my $size = $request->uri->query_param('size') and my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
 		if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
 			$px = $c_px;

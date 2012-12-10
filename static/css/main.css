@@ -23,6 +23,6 @@ div.navigation-bar:after {
 	content: "/"
 }
 
-p.copyright-notice {
+div.copyright-notice {
 	font-size: 11pt;
 }

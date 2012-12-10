@@ -24,17 +24,19 @@ p.exif {
         <h1><xsl:value-of select="atom:title"/></h1>
       </div>
       <figure>
-        <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
-        <figcaption style="display: inline-block; vertical-align: top">
-          <xsl:apply-templates select="dc:description"/>
-          <xsl:call-template name="date"/>
-          <p class="exif">
-            <xsl:call-template name="exif"/>
-          </p>
-        </figcaption>
-        <p class="copyright-notice">&#169; 1999-2012 Dmitri Popov. Please refer to the <a href="http://www.popov.org/photo/copyright.html">copyright notice</a>.</p>
+        <div style="overflow: auto">
+          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" style="float: left"/>
+          <figcaption style="display: inline">
+            <xsl:call-template name="date"/>
+            <xsl:apply-templates select="dc:description"/>
+            <p class="exif">
+              <xsl:call-template name="exif"/>
+            </p>
+          </figcaption>
+        </div>
+        <hr width="300px" align="left" style="margin-top: 1em"/>
+        <div class="copyright-notice">&#169; 1999-2012 Dmitri Popov. Please refer to the <a href="http://www.popov.org/photo/copyright.html">copyright notice</a>.</div>
       </figure>
-      
     </body>
   </html>
 </xsl:template>
@@ -50,10 +52,10 @@ p.exif {
   </xsl:choose>
 </xsl:template>
 <xsl:template match="atom:updated">
-  <p class="date"><xsl:call-template name="iso-date"/></p>
+  <div class="date"><xsl:call-template name="iso-date"/></div>
 </xsl:template>
 <xsl:template match="exif:date">
-  <p class="date"><xsl:call-template name="exif-date"/></p>
+  <div class="date"><xsl:call-template name="exif-date"/></div>
 </xsl:template>
 
 <xsl:template name="exif">
@@ -64,7 +66,7 @@ p.exif {
 </xsl:template>
 
 <xsl:template match="dc:description">
-  <div class="description"><xsl:value-of select="."/></div>
+  <p class="description"><xsl:value-of select="."/></p>
 </xsl:template>
 
 </xsl:stylesheet>

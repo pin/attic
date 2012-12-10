@@ -3,13 +3,13 @@ body {
 }
 
 img.main {
-  margin-right: 0em;
-  margin-top: 0.2em;
-  margin-bottom: 0.2em;
+  margin-right: 0.3em;
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
 }
 
 figure {
-  margin-left: 0em;
+  margin-left: 0.5em;
   margin-top: 0em;
 }
 
