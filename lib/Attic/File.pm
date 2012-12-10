@@ -193,13 +193,17 @@ sub call {
 	my $uri = $request->uri;
 	$uri->query_param('size', 'large');
 	return [301, ['Location' => $uri], ["follow $uri"]];
-#	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
-#	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
-#	return [200, [
-#		'Content-Type' => $self->content_type,
-#		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
-#		'Content-Length' => $self->{status}->[7]
-#	], $fh, ];
+}
+
+sub call_original {
+	my $self = shift;
+	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
+	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
+	return [200, [
+		'Content-Type' => $self->content_type,
+		'Last-Modified' => HTTP::Date::time2str($self->modification_time),
+		'Content-Length' => $self->{status}->[7]
+	], $fh, ];
 }
 
 1;
