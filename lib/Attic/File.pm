@@ -53,12 +53,6 @@ sub content_type {
 	Plack::MIME->mime_type($self->path) || 'text/plain';
 }
 
-sub exif {
-	my $self = shift;
-	$et->ExtractInfo($self->path) or return undef;
-	return $et->GetInfo({Group0 => ['EXIF', 'MakerNotes']});
-}
-
 sub et {
 	my $self = shift;
 	my $et = Image::ExifTool->new();

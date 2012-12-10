@@ -13,7 +13,9 @@
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
       <style type="text/css">
-
+p.exif {
+  font-style: italic;
+}
       </style>
     </head>
     <body>
@@ -24,11 +26,10 @@
       <figure>
         <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
         <figcaption style="display: inline-block; vertical-align: top">
-          <xsl:call-template name="date"/>
           <xsl:apply-templates select="dc:description"/>
+          <xsl:call-template name="date"/>
           <p class="exif">
-            <div><xsl:value-of select="exif:camera"/></div>
-            <div><xsl:value-of select="exif:lens"/></div>
+            <xsl:call-template name="exif"/>
           </p>
         </figcaption>
         <p class="copyright-notice">&#169; 1999-2012 Dmitri Popov. Please refer to the <a href="http://www.popov.org/photo/copyright.html">copyright notice</a>.</p>
@@ -48,17 +49,22 @@
     </xsl:when>
   </xsl:choose>
 </xsl:template>
-
 <xsl:template match="atom:updated">
-  <div class="date"><xsl:call-template name="iso-date"/></div>
+  <p class="date"><xsl:call-template name="iso-date"/></p>
+</xsl:template>
+<xsl:template match="exif:date">
+  <p class="date"><xsl:call-template name="exif-date"/></p>
 </xsl:template>
 
-<xsl:template match="exif:date">
-  <div class="date"><xsl:call-template name="exif-date"/></div>
+<xsl:template name="exif">
+  <xsl:for-each select="exif:camera/text() | exif:lens/text() | exif:film/text()">
+    <xsl:value-of select="."/>
+    <xsl:if test="not(position() = last())">, </xsl:if>
+  </xsl:for-each>
 </xsl:template>
 
 <xsl:template match="dc:description">
-  <p class="description"><xsl:value-of select="."/></p>
+  <div class="description"><xsl:value-of select="."/></div>
 </xsl:template>
 
 </xsl:stylesheet>

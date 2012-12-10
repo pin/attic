@@ -44,25 +44,44 @@ sub call {
 
 	$self->{hub}->{dir}->populate_siblings($entry, $self->{hub}->name);
 
-	if (my $exif = $self->{image}->exif) {
+	if (my $et = $self->{image}->et) {
+		my $exif = $et->GetInfo({Group0 => ['EXIF', 'MakerNotes'], Group1 => ['XMP-dc', 'XMP-dpn']});
 		my $exif_ns = XML::Atom::Namespace->new(exif => 'http://dp-net.com/2012/Exif');
 		$entry->set($exif_ns, 'exposure', $exif->{ExposureTime}) if $exif->{ExposureTime};	
 		$entry->set($exif_ns, 'aperture', $exif->{ApertureValue}) if $exif->{ApertureValue};	
 		$entry->set($exif_ns, 'iso', $exif->{ISO}) if $exif->{ISO};	
 		$entry->set($exif_ns, 'f', $exif->{FocalLength}) if $exif->{FocalLength};	
 		$entry->set($exif_ns, 'camera', $exif->{Model}) if $exif->{Model};
-		$entry->set($exif_ns, 'lens', $exif->{LensType}) if $exif->{LensType};
 		$entry->set($exif_ns, 'date', $exif->{DateTimeOriginal}) if $exif->{DateTimeOriginal};
+		if (my $film = $self->{image}->xmp_param('dpn', 'Film')) {
+			if (my $lens = $et->GetValue('Lens')) {
+				$entry->set($exif_ns, 'lens', $lens);
+			}
+			$entry->set($exif_ns, 'film', $film);
+		}
+		else {
+			$entry->set($exif_ns, 'lens', $exif->{LensModel}) if $exif->{LensModel};
+		}
+		my $dc_ns = XML::Atom::Namespace->new(dc => 'http://purl.org/dc/elements/1.1/');	
+		if (my $dc_title = $exif->{'Title'}) {
+	    	$entry->title($dc_title);
+		}
+		if (my $dc_description = $exif->{'Description'}) {
+	    	$entry->set($dc_ns, 'description', $dc_description);
+		}
+		elsif (my $dpn_location = $exif->{'Location'}) {
+			$entry->set($dc_ns, 'description', $dpn_location);
+		}
 	}
 	
-	my $dc_ns = XML::Atom::Namespace->new(dc => 'http://purl.org/dc/elements/1.1/');	
-	if (my $dc_title = $self->{image}->xmp_param('dc', 'Title')) {
-#    	$entry->set($dc_ns, 'title', $dc_title);
-    	$entry->title($dc_title);
-	}
-	if (my $dc_description = $self->{image}->xmp_param('dc', 'Description')) {
-    	$entry->set($dc_ns, 'description', $dc_description);
-	}
+#	my $dc_ns = XML::Atom::Namespace->new(dc => 'http://purl.org/dc/elements/1.1/');	
+#	if (my $dc_title = $self->{image}->xmp_param('dc', 'Title')) {
+##    	$entry->set($dc_ns, 'title', $dc_title);
+#    	$entry->title($dc_title);
+#	}
+#	if (my $dc_description = $self->{image}->xmp_param('dc', 'Description')) {
+#    	$entry->set($dc_ns, 'description', $dc_description);
+#	}
 
 	$entry->add_link($self->{hub}->parent_link);
 
@@ -73,5 +92,38 @@ sub call {
 		return [200, ['Content-type', 'text/html'], [Attic::Template->transform('image', $entry->elem->ownerDocument)]];
 	}
 }
+
+no warnings;
+
+%Image::ExifTool::UserDefined::dpn = (
+	GROUPS => {
+		0 => 'XMP',
+		1 => 'XMP-dpn',
+		2 => 'Image'
+	},
+	NAMESPACE => {
+		'dpn' => 'http://dp-net.com/2012/XMP/Bucket'
+	},
+	Public => {
+		Writable => 'boolean'
+	},
+	Location => {
+		Writable => 'string'
+	},
+	Film => {
+		Writable => 'string'
+	}
+);
+
+%Image::ExifTool::UserDefined = (
+		'Image::ExifTool::XMP::Main' => {
+		dpn => {
+			SubDirectory => {
+				TagTable => 'Image::ExifTool::UserDefined::dpn'
+			}
+		}
+	}
+);
+
 
 1;
