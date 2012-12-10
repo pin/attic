@@ -18,7 +18,8 @@ my $log = Log::Log4perl->get_logger();
 sub path {
 	my $self = shift;
 	my ($uri) = @_;
-	File::Spec->catdir($self->{home_dir}, $uri->path);
+	my @segments = File::Spec->no_upwards(grep {$_} $uri->path_segments);
+	my $path = File::Spec->catdir($self->{home_dir}, @segments);
 }
 
 sub directory {

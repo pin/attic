@@ -71,7 +71,7 @@ sub pop_name {
 	my ($uri) = @_;
 	my $parent_uri = URI->new($uri);
 	return undef if $uri->path eq '/';
-	my @segments = $uri->path_segments;
+	my @segments = grep {$_ ne '.' and $_ ne '..'} $uri->path_segments;
 	my $name = pop @segments;
 	$name = pop @segments unless (length $name); # in case we already have slash at the end
 	$parent_uri->path_segments(@segments, '');
