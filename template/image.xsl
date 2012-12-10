@@ -35,7 +35,7 @@ p.exif {
           </figcaption>
         </div>
         <hr width="300px" align="left" style="margin-top: 1em"/>
-        <div class="copyright-notice">&#169; 1999-2012 Dmitri Popov. Please refer to the <a href="http://www.popov.org/photo/copyright.html">copyright notice</a>.</div>
+        <div class="copyright-notice">&#169; 1999&#150;2012 Dmitri Popov</div>
       </figure>
     </body>
   </html>
