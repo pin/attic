@@ -132,9 +132,14 @@ sub call {
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	my $px;
-	if (my $size = $request->uri->query_param('size') and my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
-		if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
-			$px = $c_px;
+	if (my $size = $request->uri->query_param('size')) {
+		if (my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
+			if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
+				$px = $c_px;
+			}
+		}
+		else {
+			$px = 800;
 		}
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
@@ -186,7 +191,7 @@ sub call {
 		}
 	}
 	my $uri = $request->uri;
-	$uri->query_param_append('size', 'large');
+	$uri->query_param('size', 'large');
 	return [301, ['Location' => $uri], ["follow $uri"]];
 #	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
 #	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
