@@ -89,9 +89,19 @@ sub calculate_px {
 	$et->Options(PrintConv => 0);
 	my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation');
 	my ($imageWidth, $imageHeight, $orientation) = ($i->{ImageWidth}, $i->{ImageHeight}, $i->{Orientation});
-	($imageHeight, $imageWidth) = ($imageWidth, $imageHeight) if $orientation and $orientation > 4;
+	if ($orientation) {
+		$log->debug($self->path . ": orientation=$orientation");
+		if ($orientation > 4) {
+			($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
+		}
+	}
+	elsif (my $rotation = $et->GetInfo('Rotation')->{Rotation}) {
+		$log->debug($self->path . ": rotation=$rotation");
+		if ($rotation == 270 or $rotation == 90) {
+			($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
+		}
+	}
 	$log->debug($self->path . ": imageWidth=$imageWidth, imageHeight=$imageHeight");
-	#$log->debug($self->path . ": orientation=$orientation");
 	my $px = $size_step[0];
 	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
 		foreach my $s (@size_step) {
@@ -123,6 +133,7 @@ sub calculate_px {
 			$log->debug("portrait image so max aspect should be $px");
 		}
 	}
+	$px = int $px;
 	$log->debug("px: $px");
 	return $px;
 }
