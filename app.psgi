@@ -8,7 +8,6 @@ use Log::Log4perl qw(:easy);
 use Attic::Config;
 use Plack::Builder;
 use FindBin;
-#use Attic::Redirect;
 
 if (my $log_path = Attic::Config->value('log_path')) {
 	my $log_conf = qq(
@@ -40,7 +39,6 @@ my $app = $dir->to_app;
 
 builder {
 	enable "Plack::Middleware::Static", path => qr{^/(images|js|css|fonts)/}, root => File::Spec->catdir($FindBin::Bin, 'static');
-#	enable "+Attic::Redirect", path => Attic::Config->value('legacy_tsv_path');
 	enable "Plack::Middleware::Rewrite", rules => sub {
 		return 301 if 0
 			or s!^/misc/uaz/check-list\.html$!/2005/uaz/check-list!
@@ -49,6 +47,7 @@ builder {
 			or s!^/story/tumcha(/?)$!/2003/tumcha/!
 			or s!^/story/usinsk(/?)$!/2005/usinsk/!
 			or s!^/photo/catalog/nature\.html$!/!
+			or s!^/learn/practical-work/practical-work\.doc$!/2002/practical-work/practical-work.doc!
 			or 0;
 		return undef unless $_ =~ m|^/p|;
 		return 301 if 0
