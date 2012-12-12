@@ -49,7 +49,7 @@ sub uri {
 
 sub content_type {
 	my $self = shift;
-	return 'image/x-dcraw' if uc $self->path =~ /\.(CRW|NEF|CR2)$/i;
+	return 'image/x-dcraw' if $self->path =~ /\.(CRW|NEF|CR2)$/i;
 	Plack::MIME->mime_type($self->path) || 'text/plain';
 }
 
@@ -172,7 +172,7 @@ sub call {
 			}
 			my $image = Image::Magick->new();
 			my $x = $image->Read($self->path);
-			return [ 404, ['Content-type', 'text/plain'], "can't read image: $x"] if $x; 
+			return [ 404, ['Content-type', 'text/plain'], ["can't read image: $x"]] if $x; 
 			my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
 			my $aspect_ratio = $px / ($height > $width ? $height : $width);
 			$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
@@ -203,13 +203,11 @@ sub call {
 			], $fh, ];
 		}
 	}
-	my $uri = $request->uri;
-	$uri->query_param('px', 800);
-	return [301, ['Location' => $uri], ["follow $uri"]];
-}
-
-sub call_original {
-	my $self = shift;
+	if ($self->path =~ /\.(JPG|TIF|CRW|NEF|CR2)$/i) {
+		my $uri = $request->uri;
+		$uri->query_param('px', 800);
+		return [301, ['Location' => $uri], ["follow $uri"]];
+	}
 	open my $fh, "<:raw", $self->path or return [403, ['Content-type', 'text/plain'], ["can't open " . $self->path . ": $! "]];
 	Plack::Util::set_io_path($fh, Cwd::realpath($self->path));
 	return [200, [
