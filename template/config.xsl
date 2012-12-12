@@ -12,6 +12,7 @@ YUI().use('event', function (Y) {
   });
 });
   ]]></script>
+<!-- scroll out address bar on iPhone
   <script type="text/javascript"><![CDATA[
 window.addEventListener('load', function() {
   setTimeout(function() {
@@ -19,6 +20,7 @@ window.addEventListener('load', function() {
   }, 0);
 });
   ]]></script>
+-->
   <style>
 @import url("/css/main.css");
 @import url("/css/phone.css") (max-width: 600px);

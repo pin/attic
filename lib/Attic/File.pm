@@ -145,6 +145,7 @@ sub call {
 	my $px;
 	if (my $size = $request->uri->query_param('size')) {
 		if (my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
+			$clientHeight = $clientHeight - 50 if $clientHeight > 900; # preserve space for header
 			$clientWidth = $clientWidth - 40 if $clientWidth > 800; # preserve space for figure left margin
 			if (my $c_px = $self->calculate_px($clientWidth, $clientHeight)) {
 				$px = $c_px;
@@ -203,7 +204,7 @@ sub call {
 		}
 	}
 	my $uri = $request->uri;
-	$uri->query_param('size', 'large');
+	$uri->query_param('px', 800);
 	return [301, ['Location' => $uri], ["follow $uri"]];
 }
 
