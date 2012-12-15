@@ -162,8 +162,12 @@ sub call {
 			$uri->query_param('px', 1200);
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
-		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $px, $self->{name});
-		$cache_path =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
+		my $cache_path_base = $self->uri;
+		$cache_path_base =~ s/^\///;
+		$cache_path_base .= '.' . $px;
+#		$cache_path_base =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
+		$cache_path_base .= '.jpg';
+		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base);
 		my @cache_s = stat $cache_path or $log->debug("$cache_path: $!");
 		unless (@cache_s and $cache_s[9] > $self->modification_time) {
 			my $start_time = time;
@@ -192,6 +196,7 @@ sub call {
 			$log->info($request->uri . " was generated in " . (time - $start_time) . ' second(s)')
 		}
 		@cache_s = stat $cache_path or return [500, ['Content-type', 'text/plain'], ["failed to create $cache_path: $!"]];
+		$log->debug("send cached thumbnail: $cache_path");
 		if (S_ISREG($cache_s[2])) {
 			open my $fh, "<:raw", $cache_path
 				or return [ 403, ['Content-type', 'text/plain'], ["can't open $cache_path: $!"]];
