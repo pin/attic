@@ -20,6 +20,7 @@ my $log = Log::Log4perl->get_logger();
 
 sub prepare_app {
 	my $self = shift;
+	$self->{hubs} = {}; $self->{files} = {}; $self->{directories} = {};
 	opendir my $dh, $self->path or die "can't open " . $self->path . ": $!";
 	while (my $f = readdir $dh) {
 		next if $f =~ /^\./;
@@ -183,9 +184,22 @@ sub parent_link {
 	return $link;
 }
 
+sub app {
+	my $self = shift;
+	return $self->{app} if exists $self->{app};
+	return $self->{app} = $self->to_app;
+}
+
 sub call {
 	my $self = shift;
 	my ($env) = @_;
+	my @s = stat $self->path or die "can't stat " . $self->path . ": $!";
+	if ($s[9] > $self->modification_time) { # prepare new app in case directory was modified
+		$log->info("directory " . $self->path . " was updated (delta=" . ($s[9] - $self->modification_time) . ")");
+		$self->{status} = \@s;
+		my $app = $self->{app} = $self->to_app;
+		return $app->($env);
+	}
 	my $request = Plack::Request->new($env);
 	if ($request->uri->path eq $self->{uri}->path) {
 		unless ($request->uri->path =~ /\/$/) {

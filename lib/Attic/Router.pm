@@ -44,26 +44,18 @@ sub directory {
 	return $self->{directories}->{$uri->path} = $dir;
 }
 
-sub directory_app {
-	my $self = shift;
-	my ($uri) = @_;
-	return $self->{directory_app}->{$uri->path} if exists $self->{directory_app}->{$uri->path};
-	my $dir = $self->directory($uri) or return undef;
-	return $self->{directory_app}->{$dir->{uri}} = $dir->to_app
-}
-
 sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	
-	if (my $dir_app = $self->directory_app($request->uri)) {
-		return $dir_app->($env);
+	if (my $dir = $self->directory($request->uri)) {
+		return $dir->app->($env);
 	}
 	else {
 		my ($parent_uri, $name) = Attic::Directory->pop_name($request->uri);
-		if (my $parent_dir_app = $self->directory_app($parent_uri)) {
-			return $parent_dir_app->($env);
+		if (my $parent_dir = $self->directory($parent_uri)) {
+			return $parent_dir->app->($env);
 		}
 		else {
 			$log->error("$parent_uri not found");
