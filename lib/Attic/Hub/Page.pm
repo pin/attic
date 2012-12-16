@@ -13,6 +13,34 @@ use URI::QueryParam;
 
 my $log = Log::Log4perl->get_logger();
 
+sub prepare_app {
+	my $self = shift;
+	my $html_doc = XML::LibXML->load_html(location => $self->{page}->path, recover => 2);
+	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
+		$self->{date} = $date;
+	}
+	
+	if (my $h1 = $html_doc->findvalue('/html/body/h1')) {
+		$self->{title} = $h1;
+	}
+	elsif (my $title = $html_doc->findvalue('/html/head/title')) {
+		$self->{title} = $title;
+	}
+	
+	my $body = XML::LibXML::Element->new('body');
+	if (my $html_body_list = $html_doc->find('/html/body')) {
+		foreach my $node ($html_body_list->[0]->childNodes) {
+			next if $node->nodeName eq 'h1';
+			$body->appendChild($node);
+		}
+	}
+	$self->{body} = $body if $body->childNodes();
+}
+
+sub title {
+	shift->{title};
+}
+
 sub modification_time {
 	shift->{page}->{status}->[9];
 }
@@ -37,24 +65,15 @@ sub call {
 	my ($day, $mon, $year) = (localtime $self->{page}->modification_time)[3..5];
 	$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 	
-	my $html_doc = XML::LibXML->load_html(location => $self->{page}->path, recover => 2);
-	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
-		$entry->updated($date);
+	if (exists $self->{title}) {
+		$entry->title($self->{title});
 	}
-	
-	if (my $h1 = $html_doc->findvalue('/html/body/h1')) {
-		$entry->title($h1);
-	}
-	elsif (my $title = $html_doc->findvalue('/html/head/title')) {
-		$entry->title($title);
-	}
-	elsif ($self->{hub}->name ne 'index') {
-		$entry->title($self->{hub}->name);
+	else {
+		$entry->title($self->name);
 	}
 	
 	$entry->content(XML::Atom::Content->new());
-	foreach my $node ($html_doc->find('/html/body')->[0]->childNodes) {
-		next if $node->nodeName eq 'h1';
+	foreach my $node ($self->{body}->childNodes) {
 		$entry->content->elem->appendChild($node);
 	}
 

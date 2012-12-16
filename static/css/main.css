@@ -19,10 +19,6 @@ div.navigation-bar, h1  {
 	font-size: 16pt;
 }
 
-div.navigation-bar:after {
-	content: "/"
-}
-
 div.copyright-notice {
 	font-size: 11pt;
 }

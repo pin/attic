@@ -84,21 +84,6 @@ YUI().use('node', function (Y) {
 
 <xsl:template name="top-navigatoin-bar">
   <div class="navigation-bar">
-    <a href="#" class="brand"><span class="brand"></span></a>
-    <script type="text/javascript"><![CDATA[
-YUI().use('node', function (Y) {
-  var t = document.URL.split('/');
-  Y.one('a.brand').setAttribute('href', t[0] + '//' + t[2]);
-  var h = location.hostname.split('.');
-  if (h.length > 2) {
-    Y.one('span.brand').append(h[0]);
-  }
-  else {
-    Y.one('span.brand').append(location.hostname);
-  }
-  //Y.one('span.brand').append('popov.org');
-});
-    ]]></script>
     <xsl:apply-templates select="atom:link[@rel='up']" mode="navigation-link"/>
   </div>
   <xsl:apply-templates select="atom:link[@rel='previous']" mode="navigation-link">
@@ -122,7 +107,7 @@ YUI().use('node', function (Y) {
 <xsl:template match="atom:link[@rel='up']" mode="navigation-link">
   <xsl:if test="ae:inline/atom:feed/atom:title">
     <xsl:apply-templates select="ae:inline/atom:feed/atom:link[@rel='up']" mode="navigation-link"/>
-    / <a href="{@href}"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a>
+    <a href="{@href}"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a> / 
   </xsl:if>
 </xsl:template>
 

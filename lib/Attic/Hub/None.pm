@@ -16,6 +16,10 @@ sub modification_time {
 	return $modification_time;
 }
 
+sub title {
+	shift->{hub}->name;
+}
+
 sub populate_entry {
 	my $self = shift;
 	my ($entry, $request) = @_;

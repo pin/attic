@@ -55,6 +55,9 @@ sub prepare_app {
 	foreach my $hub_name (keys %{$self->{hubs}}) {
 		$self->hub_app($hub_name);
 	}
+	foreach my $dir (values %{$self->{directories}}) {
+		warn $dir->app;
+	}
 	$log->info("$self->{uri} directory init complete");
 }
 
@@ -81,6 +84,11 @@ sub pop_name {
 
 sub name {
 	my $self = shift;
+	if (exists $self->{hubs}->{'index'}) {
+		if (my $title = $self->{hubs}->{'index'}->title) {
+			return $title;
+		}		
+	}
 	my ($a, $name) = __PACKAGE__->pop_name($self->{uri});
 	return $name;
 }
@@ -207,7 +215,7 @@ sub call {
 			$uri->path($uri->path . '/');
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
-		if (my $hub_app = $self->hub_app('index')) {
+		if (my $hub_app = $self->hub_app('index') and $self->{hubs}->{'index'}->{impl}->{body}) {
 			$log->debug("directory request to " . $request->uri->path . " goes to index");
 			return $hub_app->($env);
 		}

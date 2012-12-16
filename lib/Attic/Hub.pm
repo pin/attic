@@ -30,6 +30,7 @@ sub prepare_app {
 		$log->info("hub $self->{name} init as None");
 		$self->{impl} = Attic::Hub::None->new(hub => $self);
 	}
+	$self->{impl}->to_app;
 }
 
 sub add_file {
@@ -46,6 +47,10 @@ sub uri {
 	pop @s;
 	$uri->path_segments(@s, $self->{name});
 	return $uri;
+}
+
+sub title {
+	shift->{impl}->title;
 }
 
 sub name {
