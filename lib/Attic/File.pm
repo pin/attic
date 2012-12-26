@@ -165,8 +165,7 @@ sub call {
 		my $cache_path_base = $self->uri;
 		$cache_path_base =~ s/^\///;
 		$cache_path_base .= '.' . $px;
-#		$cache_path_base =~ s/\.[a-z]+$/\.jpg/i; # makes previews in JPG. TODO: add exceptions for PNG and GIF
-		$cache_path_base .= '.jpg';
+		$cache_path_base .= '.jpg'; # makes previews in JPG. TODO: add exceptions for PNG and GIF
 		my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base);
 		my @cache_s = stat $cache_path or $log->debug("$cache_path: $!");
 		unless (@cache_s and $cache_s[9] > $self->modification_time) {

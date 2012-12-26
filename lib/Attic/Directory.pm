@@ -56,7 +56,7 @@ sub prepare_app {
 		$self->hub_app($hub_name);
 	}
 	foreach my $dir (values %{$self->{directories}}) {
-		warn $dir->app;
+		$dir->app;
 	}
 	$log->info("$self->{uri} directory init complete");
 }
@@ -82,13 +82,18 @@ sub pop_name {
 	return ($parent_uri, $name);
 }
 
-sub name {
+sub title {
 	my $self = shift;
 	if (exists $self->{hubs}->{'index'}) {
-		if (my $title = $self->{hubs}->{'index'}->title) {
-			return $title;
-		}		
+		return $self->{hubs}->{'index'}->title;
 	}
+	else {
+		return $self->name;
+	}
+}
+
+sub name {
+	my $self = shift;
 	my ($a, $name) = __PACKAGE__->pop_name($self->{uri});
 	return $name;
 }
@@ -175,7 +180,7 @@ sub parent_link {
 	if (my $parent_link = $parent_dir->parent_link) {
 		$feed->add_link($parent_link);
 	}
-	$feed->title($parent_dir->name) if $parent_dir->name;
+	$feed->title($parent_dir->title);
 	{
 		my $link = XML::Atom::Link->new();
 		$link->href($parent_dir->uri);
@@ -201,7 +206,7 @@ sub app {
 sub call {
 	my $self = shift;
 	my ($env) = @_;
-	my @s = stat $self->path or die "can't stat " . $self->path . ": $!";
+	my @s = stat $self->path or return [404, ['Content-type' => 'text/plain'], ["can't open $self->{uri}"]];
 	if ($s[9] > $self->modification_time) { # prepare new app in case directory was modified
 		$log->info("directory " . $self->path . " was updated (delta=" . ($s[9] - $self->modification_time) . ")");
 		$self->{status} = \@s;
@@ -225,7 +230,7 @@ sub call {
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
 			foreach my $e (sort {$a->modification_time <=> $b->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
-				$entry->title($e->name);
+				$entry->title($e->title);
 				
 				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
 				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
