@@ -77,7 +77,7 @@ sub parent_link {
 	my $inline = XML::Atom::Ext::Inline->new();
 	my $feed = XML::Atom::Feed->new();
 	$feed->add_link($self->{dir}->parent_link);
-	$feed->title($self->{dir}->name);
+	$feed->title($self->{dir}->title);
 	$inline->atom($feed);
 	my $link = XML::Atom::Link->new();
 	$link->href($self->{dir}->uri);

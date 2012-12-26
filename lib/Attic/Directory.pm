@@ -226,7 +226,7 @@ sub call {
 		}
 		else {
 			my $feed = XML::Atom::Feed->new();
-			$feed->title($self->name);
+			$feed->title($self->title);
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
 			foreach my $e (sort {$a->modification_time <=> $b->modification_time} @entries) {
 				my $entry = XML::Atom::Entry->new();
