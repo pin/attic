@@ -206,13 +206,6 @@ sub app {
 sub call {
 	my $self = shift;
 	my ($env) = @_;
-	my @s = stat $self->path or return [404, ['Content-type' => 'text/plain'], ["can't open $self->{uri}"]];
-	if ($s[9] > $self->modification_time) { # prepare new app in case directory was modified
-		$log->info("directory " . $self->path . " was updated (delta=" . ($s[9] - $self->modification_time) . ")");
-		$self->{status} = \@s;
-		my $app = $self->{app} = $self->to_app;
-		return $app->($env);
-	}
 	my $request = Plack::Request->new($env);
 	if ($request->uri->path eq $self->{uri}->path) {
 		unless ($request->uri->path =~ /\/$/) {

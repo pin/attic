@@ -25,22 +25,20 @@ sub path {
 sub directory {
 	my $self = shift;
 	my ($uri, $stat) = @_;
-	return $self->{directories}->{$uri->path} if exists $self->{directories}->{$uri->path};
-	my $directory_uri = URI->new($uri->path);
-	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self);
-	if ($stat) {
-		$dir->{status} = $stat;
-	}
-	else {
-		my @s = stat $dir->path or do {
-			$log->debug("can't stat " . $dir->path . ": $!");
+	unless ($stat) {
+		$stat = [stat $self->path($uri)] or do {
+			delete $self->{directories}->{$uri->path} if exists $self->{directories}->{$uri->path};
 			return undef;
 		};
-		unless (S_ISDIR($s[2])) {
-			return undef;
-		}
-		$dir->{status} = \@s;
 	}
+	unless (S_ISDIR($stat->[2])) {
+		return undef;
+	}
+	if (my $directory = $self->{directories}->{$uri->path}) {
+		return $directory if $directory->modification_time == $stat->[9];
+	}
+	my $directory_uri = URI->new($uri->path);
+	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self, status => $stat);
 	return $self->{directories}->{$uri->path} = $dir;
 }
 
@@ -48,7 +46,6 @@ sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
-	
 	if (my $dir = $self->directory($request->uri)) {
 		return $dir->app->($env);
 	}
