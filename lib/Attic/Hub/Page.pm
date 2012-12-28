@@ -69,7 +69,7 @@ sub call {
 		$entry->title($self->{title});
 	}
 	else {
-		$entry->title($self->name);
+		$entry->title($self->{hub}->name);
 	}
 	
 	$entry->content(XML::Atom::Content->new());
