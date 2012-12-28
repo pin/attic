@@ -7,8 +7,7 @@ use File::Spec;
 use FindBin;
 use Config::IniFiles;
 
-my $local_path = File::Spec->catfile($FindBin::Bin, 'etc', 'home.conf');
-#$local_path = '/home/pin/src/attic/etc/home.conf';
+my $local_path = $ENV{CONFIG_PATH} || File::Spec->catfile($FindBin::Bin, 'etc', 'home.conf');
 my $path = '/etc/attic/default.conf';
 
 my $ini_cache;

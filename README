@@ -1,1 +1,11 @@
-debuild -b && rm ../attic_0.1-1_i386.sun.upload && dput sun ../attic_0.1-1_i386.changes
+how to run it in development
+
+    plackup -Ilib -r -R template
+
+run tests
+
+    CONFIG_PATH=`pwd`/etc/home.conf prove -l lib t/plack.t
+
+hacky way to build it with current version
+
+    debuild -b && rm ../attic_0.1-1_i386.sun.upload && dput sun ../attic_0.1-1_i386.changes
