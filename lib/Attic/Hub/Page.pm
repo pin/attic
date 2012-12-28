@@ -38,7 +38,18 @@ sub prepare_app {
 }
 
 sub title {
-	shift->{title};
+	my $self = shift;
+	if (exists $self->{title}) {
+		return $self->{title};
+	}
+	else {
+		if ($self->{hub}->name eq 'index') {
+			return $self->{hub}->{dir}->name;
+		}
+		else {
+			return $self->{hub}->name;
+		}
+	}
 }
 
 sub modification_time {
@@ -65,12 +76,7 @@ sub call {
 	my ($day, $mon, $year) = (localtime $self->{page}->modification_time)[3..5];
 	$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
 	
-	if (exists $self->{title}) {
-		$entry->title($self->{title});
-	}
-	else {
-		$entry->title($self->{hub}->name);
-	}
+	$entry->title($self->title);
 	
 	$entry->content(XML::Atom::Content->new());
 	foreach my $node ($self->{body}->childNodes) {
@@ -81,7 +87,7 @@ sub call {
 	$entry->add_link($self->{hub}->parent_link);
 	
 	if ($request->param('type') and $request->param('type') eq 'atom') {
-		return [200, ['Content-type', 'text/plain'], ["page: " . $self->{hub}->name . "\n\n" . $entry->as_xml]];
+		return [200, ['Content-type', 'text/xml'], [$entry->as_xml]];
 	}
 	else {
 		return [200, ['Content-type', 'text/html'], [Attic::Template->transform('page', $entry->elem->ownerDocument)]];
