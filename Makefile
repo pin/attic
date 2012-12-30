@@ -16,7 +16,8 @@ install:
 	install -m644 template/image.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/page.xsl $(DESTDIR)/usr/lib/attic/template/
 	
-	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/lighttpd/conf-enabled/attic.conf
+#	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/lighttpd/conf-enabled/attic.conf
+	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/attic/lighttpd.conf
 	install -m644 etc/home.conf $(DESTDIR)/etc/attic/
 	install -m644 etc/default.conf $(DESTDIR)/etc/attic/
 

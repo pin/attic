@@ -17,7 +17,7 @@ set -e
 case "$1" in
     configure)
     
-    chown -R www-data /var/log/attic
+    chown -R www-data /var/log/attic /var/cache/attic
         
     ;;
 
