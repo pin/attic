@@ -20,6 +20,7 @@ my $log = Log::Log4perl->get_logger();
 
 sub prepare_app {
 	my $self = shift;
+	$log->debug("preparing directory: " . $self->path);
 	$self->{hubs} = {}; $self->{files} = {}; $self->{directories} = {};
 	opendir my $dh, $self->path or die "can't open " . $self->path . ": $!";
 	while (my $f = readdir $dh) {
@@ -46,8 +47,8 @@ sub prepare_app {
 		elsif (S_ISDIR($s[2])) {
 			my $dir_uri = URI->new($self->{uri});
 			my @dir_s = $dir_uri->path_segments;
-			my $s = pop @dir_s;
-			$dir_uri->path_segments(@dir_s, $f, $s);
+			pop @dir_s if $dir_s[$#dir_s] eq '';
+			$dir_uri->path_segments(@dir_s, $f, '');
 			$self->{directories}->{$f} = $self->{router}->directory($dir_uri, \@s);
 		}
 	}

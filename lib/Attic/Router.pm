@@ -39,6 +39,7 @@ sub directory {
 	}
 	my $directory_uri = URI->new($uri->path);
 	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self, status => $stat);
+	$log->debug("create directory instance: " . $dir->path . ' (' . $uri . ')');
 	return $self->{directories}->{$uri->path} = $dir;
 }
 
