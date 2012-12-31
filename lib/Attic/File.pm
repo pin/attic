@@ -68,7 +68,12 @@ sub xmp_param {
 		$et->ExtractInfo($self->path) or return undef;
 		$self->{et} = $et;	
 	}
-	if ($#_ > 2) {
+	if (@_ > 2) {
+		$self->{et}->SetNewValue('XMP-' . $ns . ':' . $key => $value);
+		unless (my $is_success = $self->{et}->WriteInfo($self->path)) {
+			my $error = $self->{et}->GetValue('Error');
+			die "error updating XMP value of $ns:$key at " . $self->path . ": $error";
+		}
 		delete $self->{et};
 		return $value;
 	}
