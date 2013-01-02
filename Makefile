@@ -4,7 +4,7 @@ all:
 clean:
 	# do nothing
 
-install:
+install: test
 	install -d $(DESTDIR)/usr/lib/attic/
 	install -m644 app.psgi $(DESTDIR)/usr/lib/attic/
 	install -m755 main.fcgi $(DESTDIR)/usr/lib/attic/
@@ -39,3 +39,6 @@ install:
 	install -d $(DESTDIR)/usr/lib/attic/static/css/
 	install -m664 static/css/main.css $(DESTDIR)/usr/lib/attic/static/css/
 	install -m664 static/css/phone.css $(DESTDIR)/usr/lib/attic/static/css/
+
+test:
+	CONFIG_PATH=`pwd`/etc/home.conf prove -l lib t/plack.t

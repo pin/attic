@@ -19,7 +19,7 @@ sub path {
 	my $self = shift;
 	my ($uri) = @_;
 	my @segments = File::Spec->no_upwards(grep {$_} $uri->path_segments);
-	my $path = File::Spec->catdir($self->{home_dir}, @segments);
+	my $path = File::Spec->catdir($self->{documents_dir}, @segments);
 }
 
 sub directory {
@@ -39,7 +39,7 @@ sub directory {
 	}
 	my $directory_uri = URI->new($uri->path);
 	my $dir = Attic::Directory->new(uri => $directory_uri, router => $self, status => $stat);
-	$log->debug("create directory instance: " . $dir->path . ' (' . $uri . ')');
+#	$log->debug("create directory instance: " . $dir->path . ' (' . $uri . ')');
 	return $self->{directories}->{$uri->path} = $dir;
 }
 

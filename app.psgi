@@ -34,7 +34,7 @@ else {
 	Log::Log4perl::init(\$log_conf);
 }
 
-my $dir = Attic::Router->new(home_dir => Attic::Config->value('documents_dir'));
+my $dir = Attic::Router->new(documents_dir => Attic::Config->value('documents_dir'));
 my $app = $dir->to_app;
 
 builder {
