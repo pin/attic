@@ -5,6 +5,8 @@ clean:
 	# do nothing
 
 install: test
+	install -m755 attic.pl $(DESTDIR)/usr/bin/attic
+
 	install -d $(DESTDIR)/usr/lib/attic/
 	install -m644 app.psgi $(DESTDIR)/usr/lib/attic/
 	install -m755 main.fcgi $(DESTDIR)/usr/lib/attic/
@@ -22,6 +24,9 @@ install: test
 	install -m644 etc/default.conf $(DESTDIR)/etc/attic/
 
 	# modules
+	install -d $(DESTDIR)/usr/share/perl5/
+	install -m644 lib/Attic.pm $(DESTDIR)/usr/share/perl5/
+
 	install -d $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Router.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Hub.pm $(DESTDIR)/usr/share/perl5/Attic/

@@ -16,8 +16,8 @@ my $log_conf = q(
 );
 Log::Log4perl::init(\$log_conf);
 
-my $document_dir = File::Spec->catdir($FindBin::Bin, 'doc');
-my $dir = Attic::Router->new(home_dir => $document_dir);
+my $documents_dir = File::Spec->catdir($FindBin::Bin, 'doc');
+my $dir = Attic::Router->new(documents_dir => $documents_dir);
 my $app = $dir->to_app;
 
 test_psgi $app, sub {
