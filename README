@@ -9,3 +9,7 @@ run tests
 hacky way to build it with current version
 
     debuild -b && rm ../attic_0.1-1_i386.sun.upload && dput sun ../attic_0.1-1_i386.changes
+
+upload updated stuff
+
+	rsync -av /home/pin/Documents/ pluto.dp-net.com:/var/attic --delete

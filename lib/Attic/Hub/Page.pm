@@ -10,6 +10,7 @@ use Plack::Request;
 use XML::LibXML;
 use Attic::Template;
 use URI::QueryParam;
+use Data::Dumper;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -26,14 +27,18 @@ sub prepare_app {
 	elsif (my $title = $html_doc->findvalue('/html/head/title')) {
 		$self->{title} = $title;
 	}
+
+	foreach my $directory_node ($html_doc->findnodes('//directories')) {
+		my $dir = $directory_node->getAttribute('href') eq '.' ? $self->{hub}->{dir} : $self->{hub}->{dir}->{router}->directory(URI->new($directory_node->getAttribute('href')));
+		$directory_node->parentNode->replaceChild($dir->directories_feed, $directory_node);
+	}
 	
 	my $body = XML::LibXML::Element->new('body');
-	if (my $html_body_list = $html_doc->find('/html/body')) {
-		foreach my $node ($html_body_list->[0]->childNodes) {
-			next if $node->nodeName eq 'h1';
-			$body->appendChild($node);
-		}
+	foreach my $node ($html_doc->findnodes('/html/body/*')) {
+		next if $node->nodeName eq 'h1';
+		$body->appendChild($node);
 	}
+
 	$self->{body} = $body if $body->childNodes();
 }
 

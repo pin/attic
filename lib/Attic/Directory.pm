@@ -200,6 +200,7 @@ sub parent_link {
 
 sub app {
 	my $self = shift;
+#	return exists $self->{app} ? $self->{app} : ($self->{app} = $self->to_app);
 	return $self->{app} if exists $self->{app};
 	return $self->{app} = $self->to_app;
 }
@@ -267,6 +268,42 @@ sub call {
 		}
 	}
 	return [404, ['Content-type', 'text/plain'], ["no such directory: " . $self->path]];
+}
+
+sub directories_feed {
+	my $self = shift;
+	my $feed = XML::Atom::Feed->new();
+	$feed->title($self->title);
+
+	my $link = XML::Atom::Link->new();
+	$link->rel('self');
+	$link->type('text/html');
+	$link->href($self->uri);
+	$feed->add_link($link);
+	
+	my $category = XML::Atom::Category->new();
+	$category->term('directories');
+	$category->scheme('http://dp-net.com/2009/Atom/EntryType'); # TODO: change namespace URI
+	$feed->category($category);
+	
+	my @entries = values %{$self->{directories}};
+	foreach my $e (sort {$a->modification_time <=> $b->modification_time} @entries) {
+		my $entry = XML::Atom::Entry->new();
+		$entry->title($e->title);
+		
+		my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
+		$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
+
+		my $link = XML::Atom::Link->new();
+		$link->rel('self');
+		$link->type('text/html');
+		$link->href($e->uri);
+		$entry->add_link($link);
+
+		$e->populate_entry($entry);
+		$feed->add_entry($entry);
+	}
+	return $feed->elem;
 }
 
 1;

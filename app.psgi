@@ -48,6 +48,8 @@ builder {
 			or s!^/story/usinsk(/?)$!/2005/usinsk/!
 			or s!^/photo/catalog/nature\.html$!/!
 			or s!^/learn/practical-work/practical-work\.doc$!/2002/practical-work/practical-work.doc!
+			or s!^/dmitri/where!/2010/dmitri/where!
+			or s!^/anastasia/where!/2011/anastasia/where!
 			or 0;
 		return undef unless $_ =~ m|^/p|;
 		return 301 if 0
