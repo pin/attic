@@ -35,7 +35,7 @@ p.exif {
           </figcaption>
         </div>
         <hr width="300px" align="left" style="margin-top: 1em; clear: both"/>
-        <div class="copyright-notice">&#169; 1999&#150;2012 Dmitri Popov</div>
+        <div class="copyright-notice">&#169; 1999&#150;2013 Dmitri Popov</div>
       </figure>
     </body>
   </html>

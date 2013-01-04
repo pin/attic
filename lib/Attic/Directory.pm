@@ -176,6 +176,7 @@ sub parent_link {
 	my ($parent_uri, $name) = $self->pop_name($uri);
 	return undef unless $parent_uri;
 	my $parent_dir = $self->{router}->directory($parent_uri);
+	$parent_dir->app; # force reading all directories
 	my $inline = XML::Atom::Ext::Inline->new();
 	my $feed = XML::Atom::Feed->new();
 	if (my $parent_link = $parent_dir->parent_link) {
