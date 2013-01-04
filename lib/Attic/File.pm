@@ -179,8 +179,11 @@ sub call {
 				File::Path::make_path(dirname($cache_path));	
 			}
 			my $image = Image::Magick->new();
-			my $x = $image->Read($self->path);
-			return [ 404, ['Content-type', 'text/plain'], ["can't read image: $x"]] if $x; 
+			my $error = $image->Read($self->path);
+			return [ 404, ['Content-type', 'text/plain'], ["can't read image: $error"]] if $error;
+			$image->Strip();
+			$image->Set(interlace => 'Plane');
+			$image->Set(quality => 85);
 			my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
 			my $aspect_ratio = $px / ($height > $width ? $height : $width);
 			$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
