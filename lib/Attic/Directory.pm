@@ -211,15 +211,18 @@ sub call {
 	my $request = Plack::Request->new($env);
 	if ($request->uri->path eq $self->{uri}->path) {
 		unless ($request->uri->path =~ /\/$/) {
+			# redirect to URI with / at the end 
 			my $uri = $request->uri;
 			$uri->path($uri->path . '/');
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
 		if (my $hub_app = $self->hub_app('index') and $self->{hubs}->{'index'}->{impl}->{body}) {
+			# show index page
 			$log->debug("directory request to " . $request->uri->path . " goes to index");
 			return $hub_app->($env);
 		}
 		else {
+			# show directory contents
 			my $feed = XML::Atom::Feed->new();
 			$feed->title($self->title);
 			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
@@ -253,21 +256,36 @@ sub call {
 	else {
 		my ($parent_uri, $name) = __PACKAGE__->pop_name($request->uri);
 		if ($parent_uri and $parent_uri->path eq $self->{uri}->path) {
+			# show hub or serve file
 			if (my $hub_app = $self->hub_app($name)) {
 				return $hub_app->($env);
 			}
 			elsif (my $file_app = $self->file_app($name)) {
 				return $file_app->($env);
 			}
-			else {
-				return [404, ['Content-type', 'text/plain'], ["$name not found at " . $parent_uri->path]];
-			}
-		}
-		else {
-			return [500, ['Content-type', 'text/plain'], ["directory at $self->{uri} knows nothing about $parent_uri"]];
 		}
 	}
-	return [404, ['Content-type', 'text/plain'], ["no such directory: " . $self->path]];
+	# the only thing left is to show 404
+	my $entry = XML::Atom::Entry->new();
+	my $inline = XML::Atom::Ext::Inline->new();
+	my $feed = XML::Atom::Feed->new();
+	if (my $parent_link = $self->parent_link) {
+		$feed->add_link($parent_link);
+	}
+	$feed->title($self->title);
+	$inline->atom($feed);
+	my $link = XML::Atom::Link->new();
+	$link->href($self->uri);
+	$link->rel('up');
+	$link->type('text/html');
+	$link->inline($inline);
+	$entry->add_link($link);
+	if ($request->param('type') and $request->param('type') eq 'atom') {
+		return [404, ['Content-type', 'text/xml'], [$entry->as_xml]];
+	}
+	else {
+		return [404, ['Content-type', 'text/html'], [Attic::Template->transform('not-found', $entry->elem->ownerDocument)]];
+	}
 }
 
 1;

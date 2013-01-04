@@ -47,19 +47,14 @@ sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
-	if (my $dir = $self->directory($request->uri)) {
-		return $dir->app->($env);
-	}
-	else {
-		my ($parent_uri, $name) = Attic::Directory->pop_name($request->uri);
-		if (my $parent_dir = $self->directory($parent_uri)) {
-			return $parent_dir->app->($env);
+	my $uri = $request->uri;
+	while ($uri) {
+		if (my $dir = $self->directory($uri)) {
+			return $dir->app->($env);
 		}
-		else {
-			$log->error("$parent_uri not found");
-			return [404, ['Content-type', 'text/plain'], [$request->path . ' not found']];
-		}
+		($uri, undef) = Attic::Directory->pop_name($uri);
 	}
+	return [500, ['Content-type', 'text/plain'], ['shit happens']];
 }
 
 1;
