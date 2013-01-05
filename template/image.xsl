@@ -15,6 +15,7 @@
       <style type="text/css">
 p.exif {
   font-style: italic;
+  color: grey;
 }
       </style>
     </head>
