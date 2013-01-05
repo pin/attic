@@ -16,6 +16,7 @@ install: test
 	install -m644 template/directory.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/date.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/image.xsl $(DESTDIR)/usr/lib/attic/template/
+	install -m644 template/not-found.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/page.xsl $(DESTDIR)/usr/lib/attic/template/
 	
 #	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/lighttpd/conf-enabled/attic.conf
@@ -44,6 +45,8 @@ install: test
 	install -d $(DESTDIR)/usr/lib/attic/static/css/
 	install -m664 static/css/main.css $(DESTDIR)/usr/lib/attic/static/css/
 	install -m664 static/css/phone.css $(DESTDIR)/usr/lib/attic/static/css/
+	install -d $(DESTDIR)/usr/lib/attic/static/images/
+	install -m664 static/images/xkcd-404.gif $(DESTDIR)/usr/lib/attic/static/images/
 
 test:
 	CONFIG_PATH=`pwd`/etc/home.conf prove -l lib t/plack.t
