@@ -15,11 +15,6 @@ use Data::Dumper;
 
 my $log = Log::Log4perl->get_logger();
 
-sub run_bubu {
-	my $class = shift;
-	$log->info('lala');
-}
-
 sub load_file {
 	my $class = shift;
 	my ($path) = @_;
@@ -56,6 +51,32 @@ sub run_title {
 }
 sub help_title { <<HELP
 usage: title [--delete] <path> [title]
+HELP
+}
+
+sub run_description {
+	my $class = shift;
+	Getopt::Long::GetOptionsFromArray(\@_,
+		'delete' => \my $is_delete
+	) or die "wrong options\n" . $class->help_description;
+	my ($path, $description) = @_;
+	die "missing path\n" . $class->help_description unless $path;
+	die "ambigous options\n" . $class->help_description if $description and $is_delete;
+	my $file = $class->load_file($path);
+	if ($description) {
+		$file->xmp_param('dc', 'Description', $description);
+		print $file->xmp_param('dc', 'Description') . "\n";
+	}
+	elsif ($is_delete) {
+		$file->xmp_param('dc', 'Description', undef);
+	}
+	else {
+		my $description = $file->xmp_param('dc', 'Description');
+		print $description . "\n" if defined $description;
+	}
+}
+sub help_description { <<HELP
+usage: desctiption [--delete] <path> [desctiption]
 HELP
 }
 
