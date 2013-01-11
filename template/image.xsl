@@ -17,6 +17,10 @@ p.exif {
   font-style: italic;
   color: grey;
 }
+
+img.main {
+  float: left
+}
       </style>
     </head>
     <body>
@@ -26,7 +30,7 @@ p.exif {
       </div>
       <figure>
         <div style="aoverflow: auto">
-          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" style="float: left"/>
+          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" alt="{atom:title}"/>
           <figcaption style="display: inline">
             <xsl:call-template name="date"/>
             <xsl:apply-templates select="dc:description"/>
