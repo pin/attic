@@ -215,7 +215,7 @@ sub call {
 			], $fh, ];
 		}
 	}
-	if ($self->path =~ /\.(JPG|TIF|CRW|NEF|CR2)$/i) {
+	if ($self->path =~ /\.(JPG|TIF|CRW|NEF|CR2)$/i and $self->uri ne '/2005/usinsk/map-with-track.jpg') {
 		my $uri = $request->uri;
 		$uri->query_param('px', 800);
 		return [301, ['Location' => $uri], ["follow $uri"]];
