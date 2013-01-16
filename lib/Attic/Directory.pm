@@ -153,6 +153,7 @@ sub populate_siblings {
 	if (exists $self->{hubs}->{$name}) {
 		my $previous_name;
 		foreach my $e (sort {$a->modification_time <=> $b->modification_time} values %{$self->{hubs}}) {
+			next if $e->name eq 'index';
 			if (defined $previous_name and $previous_name eq $name) {
 				my $link = XML::Atom::Link->new();
 				$link->rel('next');

@@ -21,22 +21,12 @@ p.exif {
 img.main {
   float: left
 }
-
-.next-link {
-  width: 0px;
-  height: 0px;
-  border-top: 2em solid #DDD;
-  border-right: 2em solid #AAA;
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-}
       </style>
       <script type="text/javascript"><![CDATA[
 YUI().use('node', 'event', function (Y) {
   Y.on("domready", function() {
     Y.all("link.navigation").each(function(link) {
-      if(0 and link.get('rel') == 'next') {
+      if(link.get('rel') == 'next') {
         var node = Y.Node.create('<a href="' + link.get('href') + '"><div class="next-link"></div></a>');
         Y.one("body").appendChild(node);
       }

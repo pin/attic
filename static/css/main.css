@@ -22,3 +22,16 @@ div.navigation-bar, h1  {
 div.copyright-notice {
 	font-size: 11pt;
 }
+
+.next-link {
+  width: 0px;
+  height: 0px;
+  border-bottom: 2em solid #F9F9F9;
+  border-right: 2em solid #BBB;
+  position: absolute;
+  top: 0;
+  right: 0;
+  -moz-box-shadow: -4px 4px 4px rgba(0,0,0,0.1);
+  -webkit-box-shadow: -4px 4px 4px rgba(0,0,0,0.1);
+  box-shadow: -4px 4px 4px rgba(0,0,0,0.1);
+}

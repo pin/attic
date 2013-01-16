@@ -16,3 +16,7 @@ figure {
 div.navigation-bar, h1  {
 	font-size: 12pt;
 }
+
+.next-link {
+  display: none;
+}
