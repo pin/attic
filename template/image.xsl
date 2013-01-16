@@ -36,7 +36,7 @@ img.main {
 YUI().use('node', 'event', function (Y) {
   Y.on("domready", function() {
     Y.all("link.navigation").each(function(link) {
-      if(link.get('rel') == 'next') {
+      if(0 and link.get('rel') == 'next') {
         var node = Y.Node.create('<a href="' + link.get('href') + '"><div class="next-link"></div></a>');
         Y.one("body").appendChild(node);
       }
