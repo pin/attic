@@ -13,6 +13,7 @@ use File::Spec;
 use Attic::Hub::Page;
 use Attic::Hub::Image;
 use Attic::Hub::None;
+use Attic::Hub::Video;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -25,6 +26,10 @@ sub prepare_app {
 	elsif (my ($image_f) = grep {$_->content_type =~ /^image\//} values %{$self->{files}}) {
 		$log->info("hub $self->{name} init as Image: $image_f->{name}");
 		$self->{impl} = Attic::Hub::Image->new(hub => $self, image => $image_f);
+	}
+	elsif (my ($video_f) = grep {$_->content_type =~ /^video\//} values %{$self->{files}}) {
+		$log->info("hub $self->{name} init as Video: $video_f->{name}");
+		$self->{impl} = Attic::Hub::Video->new(hub => $self, video => $video_f);
 	}
 	else {
 		$log->info("hub $self->{name} init as None");
