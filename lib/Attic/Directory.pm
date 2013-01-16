@@ -55,6 +55,11 @@ sub prepare_app {
 	closedir $dh;
 	foreach my $hub_name (keys %{$self->{hubs}}) {
 		$self->hub_app($hub_name);
+		# skip hubs that have no implementation
+		if (ref $self->{hubs}->{$hub_name}->{impl} eq 'Attic::Hub::None') {
+			delete $self->{hubs}->{$hub_name};
+			delete $self->{hub_app}->{$hub_name}
+		}
 	}
 	foreach my $dir (values %{$self->{directories}}) {
 		$dir->app;
