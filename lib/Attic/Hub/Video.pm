@@ -24,11 +24,21 @@ sub populate_entry {
 	$category->scheme('http://dp-net.com/2009/Atom/EntryType');
 	$entry->category($category);
 
-    my $link = XML::Atom::Link->new();
-    $link->rel('alternate');
-    $link->type('video/mp4');
-    $link->href($self->{video}->uri);
-    $entry->add_link($link);
+	{
+	    my $link = XML::Atom::Link->new();
+	    $link->rel('alternate');
+	    $link->type('video/mp4');
+	    $link->href($self->{video}->uri);
+	    $entry->add_link($link);
+	}
+
+	{
+	    my $link = XML::Atom::Link->new();
+	    $link->rel('alternate');
+	    $link->type('image/jpg');
+	    $link->href($self->{video}->uri);
+	    $entry->add_link($link);
+	}
 }
 
 sub call {

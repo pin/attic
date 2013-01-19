@@ -18,10 +18,10 @@ ul.links li:last-child:after { content: "" }
     <body>
       <xsl:call-template name="top-navigatoin-bar"/>
       <h1><xsl:value-of select="atom:title"/></h1>
-      <xsl:if test="atom:entry[atom:category/@term='image']">
+      <xsl:if test="atom:entry[atom:category/@term='image' or atom:category/@term='video']">
         <p>
           <!-- h2>Images:</h2>  -->
-          <xsl:apply-templates select="atom:entry[atom:category/@term='image']"/>
+          <xsl:apply-templates select="atom:entry[atom:category/@term='image' or atom:category/@term='video']"/>
         </p>
       </xsl:if>
       <xsl:if test="atom:entry[atom:category/@term='directory']">
@@ -42,6 +42,10 @@ ul.links li:last-child:after { content: "" }
 
 <xsl:template match="/atom:feed/atom:entry[atom:category/@term='image']">
   <a href="{atom:link/@href}"><img class="th" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?px=300"/></a>
+</xsl:template>
+
+<xsl:template match="/atom:feed/atom:entry[atom:category/@term='video']">
+  <a href="{atom:link/@href}"><img class="th" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?type=image"/></a>
 </xsl:template>
 
 </xsl:stylesheet>

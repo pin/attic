@@ -29,7 +29,7 @@ img.main {
         <h1><xsl:value-of select="atom:title"/></h1>
       </div>
       <figure>
-        <div style="aoverflow: auto">
+        <div>
           <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" alt="{atom:title}"/>
           <figcaption style="display: inline">
             <xsl:call-template name="date"/>

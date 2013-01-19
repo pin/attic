@@ -28,18 +28,13 @@ img.main {
         <xsl:call-template name="top-navigatoin-bar"/>
         <h1><xsl:value-of select="atom:title"/></h1>
       </div>
-      
-        <div style="aoverflow: auto">
-
-      <video id="my_video_1" class="video-js vjs-default-skin" controls="on"
-  preload="auto" width="854" height="480"
-  data-setup="">
-  <!-- source src="{atom:link[@rel='alternate' and @type='video/mp4']/@href}" type='video/mp4'/>  -->
-  <source src="lala.mp4" type='video/mp4'/>
-</video>
-        </div>
-        <hr width="300px" align="left" style="margin-top: 1em; clear: both"/>
-        <div class="copyright-notice">&#169; 1999&#150;2013 Dmitri Popov</div>
+      <div style="margin-top: 2em">
+        <center>
+          <video controls="on" preload="auto" width="854" height="480" data-setup="">
+            <source src="{atom:link[@rel='alternate' and @type='video/mp4']/@href}" type='video/mp4'/>
+          </video>
+        </center>
+      </div>
     </body>
   </html>
 </xsl:template>
