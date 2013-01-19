@@ -22,38 +22,19 @@ img.main {
   float: left
 }
       </style>
-      <script type="text/javascript"><![CDATA[
-YUI().use('node', 'event', function (Y) {
-  Y.on("domready", function() {
-    Y.all("link.navigation").each(function(link) {
-      if(link.get('rel') == 'next') {
-        var node = Y.Node.create('<a href="' + link.get('href') + '"><div class="next-link"></div></a>');
-        Y.one("body").appendChild(node);
-      }
-    });
-  });
-});
-      ]]></script>
     </head>
     <body>
       <div>
         <xsl:call-template name="top-navigatoin-bar"/>
         <h1><xsl:value-of select="atom:title"/></h1>
       </div>
-      <figure>
-        <div>
-          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" alt="{atom:title}"/>
-          <figcaption style="display: inline">
-            <xsl:call-template name="date"/>
-            <xsl:apply-templates select="dc:description"/>
-            <p class="exif">
-              <xsl:call-template name="exif"/>
-            </p>
-          </figcaption>
-        </div>
-        <hr width="300px" align="left" style="margin-top: 1em; clear: both"/>
-        <div class="copyright-notice">&#169; 1999&#150;2013 Dmitri Popov</div>
-      </figure>
+      <div style="margin-top: 2em">
+        <center>
+          <video controls="on" preload="auto" width="854" height="480" data-setup="">
+            <source src="{atom:link[@rel='alternate' and @type='video/mp4']/@href}" type='video/mp4'/>
+          </video>
+        </center>
+      </div>
     </body>
   </html>
 </xsl:template>
