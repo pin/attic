@@ -8,25 +8,21 @@ use IPC::Open3;
 
 sub system_ex {
 	my $class = shift;
-	my ( $command, $log ) = @_;
+	my ($command, $log) = @_;
 	my $start_time = time;
 	$log->debug("executing $command") if defined $log;
-	my $pid = open3( *CMD_IN, *CMD_OUT, *CMD_ERR, $command );
-
+	my $pid = open3(*CMD_IN, *CMD_OUT, *CMD_ERR, $command);
 	close CMD_IN;
-
 	my $selector = IO::Select->new();
-	$selector->add( *CMD_ERR, *CMD_OUT );
-
+	$selector->add(*CMD_ERR, *CMD_OUT);
 	my $stderr = '', my $stdout = '';
-
-	while ( my @ready = $selector->can_read ) {
+	while (my @ready = $selector->can_read) {
 		foreach my $fh (@ready) {
-			if ( eof $fh ) {
+			if (eof $fh) {
 				$selector->remove($fh);
 				next;
 			}
-			if ( fileno $fh == fileno CMD_ERR ) {
+			if (fileno $fh == fileno CMD_ERR) {
 				my $s = scalar <CMD_ERR>;
 				$stderr .= $s;
 				chomp $s;
@@ -40,16 +36,12 @@ sub system_ex {
 			}
 		}
 	}
-
 	waitpid $pid, 0;
-	my $retcode      = $? >> 8;
+	my $retcode = $? >> 8;
 	my $elapsed_time = time - $start_time;
-	$log->debug("RETCODE: $retcode, seconds elapsed: $elapsed_time")
-	  if defined $log;
-
+	$log->debug("RETCODE: $retcode, seconds elapsed: $elapsed_time") if defined $log;
 	close CMD_OUT;
 	close CMD_ERR;
-
 	return $retcode, $stdout, $stderr;
 }
 

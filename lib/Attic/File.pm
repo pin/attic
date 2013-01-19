@@ -152,7 +152,7 @@ sub call {
 	my $request = Plack::Request->new($env);
 	my ($type, $subtype) = split /\//, $self->content_type;	
 	my ($path, $s);
-	if ($type eq 'image') {
+	if ($type eq 'image' and $subtype ne 'gif') {
 		my $px;
 		if (my $size = $request->uri->query_param('size')) {
 			if (my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
@@ -294,12 +294,12 @@ sub image_cache {
 	my $cache_path_base = $self->uri;
 	$cache_path_base =~ s/^\///;
 	$cache_path_base .= '.' . $px;
-	$cache_path_base .= '.jpg'; # makes previews in JPG. TODO: add exceptions for PNG and GIF
-	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base);
+	# makes previews in JPG. TODO: add exceptions for PNG and GIF
+	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base . '.jpg');
 	my @cache_s = stat $cache_path or $log->debug("cache $cache_path is missing: $!");
 	return ($cache_path, \@cache_s) if @cache_s and $cache_s[9] > $self->modification_time;
 	my $start_time = time;
-	File::Path::make_path(dirname($cache_path)) if -d dirname($cache_path);
+	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
 	my $image = Image::Magick->new();
 	my $error = $image->Read($self->path);
 	die "can't read image " . $self->path . ": " . $error if $error; 
@@ -330,14 +330,17 @@ sub video_thumbnail_cache {
 	my $self = shift;
 	my $cache_path_base = $self->uri;
 	$cache_path_base =~ s/^\///;
-	$cache_path_base .= '.jpg'; # makes previews in JPG. TODO: add exceptions for PNG and GIF
-	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base);
+	$cache_path_base .= '.jpg';
+	my $tmp_cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base . '.tmp.jpg');
+	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base . '.jpg');
 	my @cache_s = stat $cache_path or $log->debug("cache $cache_path is missing: $!");
 	return ($cache_path, \@cache_s) if @cache_s and $cache_s[9] > $self->modification_time;
-	File::Path::make_path(dirname($cache_path)) if -d dirname($cache_path);
+	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
+	unlink $tmp_cache_path if -f $tmp_cache_path;
 	my ($retcode, $stdout, $stderr) = Attic::Util->system_ex('/usr/bin/ffmpeg -i ' . $self->path
-		. ' -vframes 1 -s 320x200 ' . $cache_path, $log);
+		. ' -vframes 1 -s 320x200 ' . $tmp_cache_path, $log);
 	die "can't process " . $self->path . ": retcode=$retcode" if $retcode;
+	rename $tmp_cache_path, $cache_path or die "can't commit $tmp_cache_path: $!";
 	@cache_s = stat $cache_path or die "can't create $cache_path: $!";
 	return ($cache_path, \@cache_s);
 }
@@ -352,11 +355,12 @@ sub video_cache {
 	return ($cache_path, \@cache_s) if @cache_s and $cache_s[9] > $self->modification_time;
 	my $start_time = time;
 	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
+	unlink $tmp_cache_path if -f $tmp_cache_path;
 	my ($retcode, $stdout, $stderr) = Attic::Util->system_ex('/usr/bin/ffmpeg -i ' . $self->path
 		. ' -acodec libfaac -ab 128k -vcodec libx264 -pix_fmt yuv420p -preset slow -crf 30 -threads 0 -s 854x480 '
 			. $tmp_cache_path, $log);
 	die "can't process " . $self->path . ": retcode=$retcode" if $retcode;
-	rename $tmp_cache_path, $cache_path or die "can't commit $cache_path: $!";
+	rename $tmp_cache_path, $cache_path or die "can't commit $tmp_cache_path: $!";
 	@cache_s = stat $cache_path or die "can't create $cache_path: $!";
 	$log->info("$cache_path created in " . time - $start_time . " second(s)");
 	return ($cache_path, \@cache_s);
