@@ -180,7 +180,7 @@ sub call {
 				return [500, ['Content-type', 'text/plain'], ["can't load thumbnail: $error"]];
 			}
 		}
-		elsif ($self->uri eq '/2005/usinsk/map-with-track.jpg') {
+		elsif ($self->uri eq '/2005/usinsk/map-with-track.jpg' or $self->uri eq '/favicon.ico') {
 			$path = $self->path;
 			my @stat = stat $path or return [500, ['Content-type', 'text/plain'], ["can't open $path: $!"]];
 			$s = \@stat;
