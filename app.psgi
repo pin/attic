@@ -44,6 +44,7 @@ builder {
 			or s!^/misc/uaz/check-list\.html$!/2005/uaz/check-list!
 			or s!^/misc/uaz/transmission-gear-ratio\.html$!/2005/uaz/transmission-gear-ratio!
 			or s!^/misc/uaz/transmission\.html$!/2005/uaz/transmission-double-clutch-shift!
+			or s!^/misc/uaz/spares-for-travel\.html$!/2005/uaz/spares-for-travel!
 			or s!^/story/tumcha(/?)$!/2003/tumcha/!
 			or s!^/story/usinsk(/?)$!/2005/usinsk/!
 			or s!^/story/usinsk/map-with-track.jpg$!/2005/usinsk/map-with-track.jpg!
