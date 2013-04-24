@@ -88,6 +88,7 @@ _gaq.push(['_trackPageview']);
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
   ]]></script>
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans:300&amp;subset=latin,cyrillic' rel='stylesheet' type='text/css'/>
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
