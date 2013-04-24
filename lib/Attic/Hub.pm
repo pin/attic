@@ -20,19 +20,19 @@ my $log = Log::Log4perl->get_logger();
 sub prepare_app {
 	my $self = shift;
 	if (my ($html_name) = grep {$_ eq $self->{name} . '.html'} keys %{$self->{files}}) {
-		$log->info("hub $self->{name} init as Page: $html_name");
+#		$log->info("hub $self->{name} init as Page: $html_name");
 		$self->{impl} = Attic::Hub::Page->new(hub => $self, page => $self->{files}->{$html_name});
 	}
 	elsif (my ($image_f) = grep {$_->content_type =~ /^image\//} values %{$self->{files}}) {
-		$log->info("hub $self->{name} init as Image: $image_f->{name}");
+#		$log->info("hub $self->{name} init as Image: $image_f->{name}");
 		$self->{impl} = Attic::Hub::Image->new(hub => $self, image => $image_f);
 	}
 	elsif (my ($video_f) = grep {$_->content_type =~ /^video\//} values %{$self->{files}}) {
-		$log->info("hub $self->{name} init as Video: $video_f->{name}");
+#		$log->info("hub $self->{name} init as Video: $video_f->{name}");
 		$self->{impl} = Attic::Hub::Video->new(hub => $self, video => $video_f);
 	}
 	else {
-		$log->info("hub $self->{name} init as None");
+#		$log->info("hub $self->{name} init as None");
 		$self->{impl} = Attic::Hub::None->new(hub => $self);
 	}
 	$self->{impl}->to_app;
