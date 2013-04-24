@@ -20,7 +20,7 @@ my $log = Log::Log4perl->get_logger();
 
 sub prepare_app {
 	my $self = shift;
-	$log->debug("preparing directory: " . $self->path);
+#	$log->debug("preparing directory: " . $self->path);
 	$self->{hubs} = {}; $self->{files} = {}; $self->{directories} = {};
 	opendir my $dh, $self->path or die "can't open " . $self->path . ": $!";
 	while (my $f = readdir $dh) {
@@ -64,7 +64,7 @@ sub prepare_app {
 	foreach my $dir (values %{$self->{directories}}) {
 		$dir->app;
 	}
-	$log->info("$self->{uri} directory init complete");
+#	$log->info("$self->{uri} directory init complete");
 }
 
 sub uri {

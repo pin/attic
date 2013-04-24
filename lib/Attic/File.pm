@@ -29,7 +29,7 @@ my $cache_et = Image::ExifTool->new();
 
 sub prepare_app {
 	my $self = shift;
-	$log->info($self->uri . " file loaded");
+#	$log->info($self->uri . " file loaded");
 }
 
 sub path {
@@ -92,13 +92,13 @@ my @size_step = (300, 350, 450, 600, 800, 1000, 1200);
 sub calculate_px {
 	my $self = shift;
 	my ($clientWidth, $clientHeight) = @_;
-	$log->debug("calculate_px: clientWidth=$clientWidth, clientHeight=$clientHeight");
+#	$log->debug("calculate_px: clientWidth=$clientWidth, clientHeight=$clientHeight");
 	my $et = $self->et or return undef;
 	$et->Options(PrintConv => 0);
 	my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation');
 	my ($imageWidth, $imageHeight, $orientation) = ($i->{ImageWidth}, $i->{ImageHeight}, $i->{Orientation});
 	if ($orientation) {
-		$log->debug($self->path . ": orientation=$orientation");
+#		$log->debug($self->path . ": orientation=$orientation");
 		if ($orientation > 4) {
 			($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
 		}
@@ -109,7 +109,7 @@ sub calculate_px {
 			($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
 		}
 	}
-	$log->debug($self->path . ": imageWidth=$imageWidth, imageHeight=$imageHeight");
+#	$log->debug($self->path . ": imageWidth=$imageWidth, imageHeight=$imageHeight");
 	my $px = $size_step[0];
 	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
 		foreach my $s (@size_step) {
@@ -120,10 +120,10 @@ sub calculate_px {
 				last;
 			}
 		}
-		$log->debug("image height should be $px");
+#		$log->debug("image height should be $px");
 		if ($imageWidth > $imageHeight) {
 			$px = $imageWidth / $imageHeight * $px;
-			$log->debug("lanscape image so max aspect should be $px");
+#			$log->debug("lanscape image so max aspect should be $px");
 		}
 	}
 	else {
@@ -135,14 +135,14 @@ sub calculate_px {
 				last;
 			}
 		}
-		$log->debug("image width should be $px");
+#		$log->debug("image width should be $px");
 		if ($imageWidth < $imageHeight) {
 			$px = $imageHeight / $imageWidth * $px;
-			$log->debug("portrait image so max aspect should be $px");
+#			$log->debug("portrait image so max aspect should be $px");
 		}
 	}
 	$px = int $px;
-	$log->debug("px: $px");
+#	$log->debug("px: $px");
 	return $px;
 }
 
