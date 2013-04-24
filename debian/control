@@ -8,6 +8,6 @@ Homepage: http://dp-net.com
 
 Package: attic
 Architecture: all
-Depends: lighttpd, perl, perl-modules, libplack-perl, libxml-libxslt-perl, perlmagick, libimage-exiftool-perl, libconfig-inifiles-perl, libfcgi-perl, liblog-log4perl-perl, ufraw-batch, libxml-atom-perl, libxml-atom-ext-inline-perl, libplack-middleware-rewrite-perl, shla, ffmpeg, libperlio-subfile-perl
+Depends: lighttpd, perl, perl-modules, libplack-perl, libxml-libxslt-perl, perlmagick, libimage-exiftool-perl, libconfig-inifiles-perl, libfcgi-perl, liblog-log4perl-perl, ufraw-batch, libxml-atom-perl, libxml-atom-ext-inline-perl, libplack-middleware-rewrite-perl, shla, ffmpeg, libperlio-subfile-perl, libdbd-sqlite3-perl
 Description: Basic framework for command-line experience
   Should be used as a base module for other stuff, so no more words here.
