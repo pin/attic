@@ -5,7 +5,6 @@ use strict;
 
 use Getopt::Long qw(GetOptionsFromArray);
 use Log::Log4perl;
-use Attic::File;
 use Attic::Config;
 use File::Spec;
 use URI;

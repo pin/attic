@@ -92,7 +92,7 @@ _gaq.push(['_trackPageview']);
 </xsl:template>
 
 <xsl:template match="atom:link" mode="head">
-  <link rel="{@rel}" href="{@href}" class="navigation"/>
+  <link rel="{@rel}" href="{@href}" class="navigation" title="{@title}"/>
 </xsl:template>
 
 <xsl:template name="top-navigatoin-bar">

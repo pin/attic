@@ -4,7 +4,7 @@ all:
 clean:
 	# do nothing
 
-install: test
+install: 
 	install -m755 attic.pl $(DESTDIR)/usr/bin/attic
 
 	install -d $(DESTDIR)/usr/lib/attic/

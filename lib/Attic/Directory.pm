@@ -1,287 +1,133 @@
 package Attic::Directory;
 
-use strict;
 use warnings;
+use strict;
 
-use base 'Plack::Component';
-
-use Plack::Request;
 use Data::Dumper;
 use Log::Log4perl;
-use File::Spec;
-use Attic::File;
-use Fcntl ':mode';
-use Attic::Hub;
-use XML::Atom::Feed; $XML::Atom::DefaultVersion = '1.0';
-use URI;
-use XML::Atom::Ext::Inline;
 
 my $log = Log::Log4perl->get_logger();
 
-sub prepare_app {
-	my $self = shift;
-#	$log->debug("preparing directory: " . $self->path);
-	$self->{hubs} = {}; $self->{files} = {}; $self->{directories} = {};
-	opendir my $dh, $self->path or die "can't open " . $self->path . ": $!";
-	while (my $f = readdir $dh) {
-		next if $f =~ /^\./;
-		my $path = File::Spec->catfile($self->path, $f);
-		my @s = lstat $path or do {
-			$log->debug("can't stat $path: $!");
-			return;
-		};
-		next unless my $is_other_readable = $s[2] & S_IROTH;
-		if (S_ISREG($s[2])) {
-			my $file = $self->{files}->{$f} = Attic::File->new(dir => $self, name => $f, status => \@s);
-			my @t = split /\./, $f;
-			pop @t;
-			while (@t) {
-				my $h = join '.', @t;
-				unless (exists $self->{hubs}->{$h}) {
-					$self->{hubs}->{$h} = Attic::Hub->new(name => $h, dir => $self);
-				}
-				$self->{hubs}->{$h}->add_file($file);
-				pop @t;
-			}
-		}
-		elsif (S_ISDIR($s[2])) {
-			my $dir_uri = URI->new($self->{uri});
-			my @dir_s = $dir_uri->path_segments;
-			pop @dir_s if $dir_s[$#dir_s] eq '';
-			$dir_uri->path_segments(@dir_s, $f, '');
-			$self->{directories}->{$f} = $self->{router}->directory($dir_uri, \@s);
-		}
-	}
-	closedir $dh;
-	foreach my $hub_name (keys %{$self->{hubs}}) {
-		$self->hub_app($hub_name);
-		# skip hubs that have no implementation
-		if (ref $self->{hubs}->{$hub_name}->{impl} eq 'Attic::Hub::None') {
-			delete $self->{hubs}->{$hub_name};
-			delete $self->{hub_app}->{$hub_name}
-		}
-	}
-	foreach my $dir (values %{$self->{directories}}) {
-		$dir->app;
-	}
-#	$log->info("$self->{uri} directory init complete");
-}
-
-sub uri {
-	shift->{uri};
-}
-
-sub path {
-	my $self = shift;
-	return $self->{router}->path($self->{uri});
-}
-
-sub pop_name {
+sub new {
 	my $class = shift;
-	my ($uri) = @_;
-	my $parent_uri = URI->new($uri);
-	return undef if $uri->path eq '/';
-	my @segments = grep {$_ ne '.' and $_ ne '..'} $uri->path_segments;
-	my $name = pop @segments;
-	$name = pop @segments unless (length $name); # in case we already have slash at the end
-	$parent_uri->path_segments(@segments, '');
-	return ($parent_uri, $name);
+	my $self = bless {@_}, $class;
+	die 'missing router' unless $self->{router};
+	return $self;
 }
 
-sub title {
+sub make_directory_listing {
 	my $self = shift;
-	if (exists $self->{hubs}->{'index'}) {
-		return $self->{hubs}->{'index'}->title;
+	my ($request, $feed, $uri) = @_;
+	my $f_list = $self->{router}->{db}->list_feed_feeds($uri);
+	my $e_list = $self->{router}->{db}->list_feed_entries($uri);
+	foreach my $entry (@$f_list, @$e_list) {
+		$self->{router}->{page}->populate($entry);
+		$feed->add_entry($entry);
 	}
-	else {
-		return $self->name;
-	}
-}
-
-sub name {
-	my $self = shift;
-	my ($a, $name) = __PACKAGE__->pop_name($self->{uri});
-	return $name;
-}
-
-sub hub_app {
-	my $self = shift;
-	my ($name) = @_;
-	return $self->{hub_app}->{$name} if exists $self->{hub_app}->{$name};
-	if (exists $self->{hubs}->{$name}) {
-		return $self->{hub_app}->{$name} = $self->{hubs}->{$name}->to_app;
-	}
-	return undef;
-}
-
-sub file_app {
-	my $self = shift;
-	my ($name) = @_;
-	return $self->{file_app}->{$name} if exists $self->{file_app}->{$name};
-	if (exists $self->{files}->{$name}) {
-		return $self->{file_app}->{$name} = $self->{files}->{$name}->to_app;
-	}
-	return undef;
-}
-
-sub modification_time {
-	shift->{status}->[9];
-}
-
-sub populate_entry {
-	my $self = shift;
-	my ($entry, $request) = @_;
-	my $category = XML::Atom::Category->new();
-	$category->term('directory');
-	$category->scheme('http://dp-net.com/2009/Atom/EntryType');
-	$entry->category($category);
-}
-
-sub populate_siblings {
-	my $self = shift;
-	my ($entry, $name) = @_;
-	
-	return if $name eq 'index';
-
-    my $link = XML::Atom::Link->new();
-    $link->rel('index');
-    $link->title($self->name);
-    $link->type('text/html');
-    $link->href($self->uri);
-    $entry->add_link($link);
-
-	if (exists $self->{hubs}->{$name}) {
-		my $previous_name;
-		foreach my $e (sort {$a->modification_time <=> $b->modification_time} values %{$self->{hubs}}) {
-			next if $e->name eq 'index';
-			if (defined $previous_name and $previous_name eq $name) {
-				my $link = XML::Atom::Link->new();
-				$link->rel('next');
-				$link->title($e->name);
-				$link->type('text/html');
-				$link->href($e->uri);
-				$entry->add_link($link);
-				last;
-			}
-			if ($previous_name and $e->name eq $name) {
-				my $link = XML::Atom::Link->new();
-				$link->rel('previous');
-				$link->title($self->{hubs}->{$previous_name}->name);
-				$link->type('text/html');
-				$link->href($self->{hubs}->{$previous_name}->uri);
-				$entry->add_link($link);
-			}
-			$previous_name = $e->name;
-		}
-	}
-}
-
-sub parent_link {
-	my $self = shift;
-	my $uri = $self->uri;
-	my ($parent_uri, $name) = $self->pop_name($uri);
-	return undef unless $parent_uri;
-	my $parent_dir = $self->{router}->directory($parent_uri);
-	$parent_dir->app; # force reading all directories
-	my $inline = XML::Atom::Ext::Inline->new();
-	my $feed = XML::Atom::Feed->new();
-	if (my $parent_link = $parent_dir->parent_link) {
+	if (my $parent_link = $self->{router}->{db}->parent_link($uri)) {
 		$feed->add_link($parent_link);
 	}
-	$feed->title($parent_dir->title);
-	{
-		my $link = XML::Atom::Link->new();
-		$link->href($parent_dir->uri);
-		$link->rel('self');
-		$link->type('text/html');
-		$feed->add_link($link);
-	}
-	$inline->atom($feed);
-	my $link = XML::Atom::Link->new();
-	$link->href($parent_uri);
-	$link->rel('up');
-	$link->type('text/html');
-	$link->inline($inline);
-	return $link;
-}
-
-sub app {
-	my $self = shift;
-	return $self->{app} if exists $self->{app};
-	return $self->{app} = $self->to_app;
-}
-
-sub call {
-	my $self = shift;
-	my ($env) = @_;
-	my $request = Plack::Request->new($env);
-	if ($request->uri->path eq $self->{uri}->path) {
-		unless ($request->uri->path =~ /\/$/) {
-			# redirect to URI with / at the end 
-			my $uri = $request->uri;
-			$uri->path($uri->path . '/');
-			return [301, ['Location' => $uri], ["follow $uri"]];
-		}
-		if (my $hub_app = $self->hub_app('index') and $self->{hubs}->{'index'}->{impl}->{body}) {
-			# show index page
-			$log->debug("directory request to " . $request->uri->path . " goes to index");
-			return $hub_app->($env);
-		}
-		else {
-			# show directory contents
-			my $feed = XML::Atom::Feed->new();
-			$feed->title($self->title);
-			my @entries = (values %{$self->{hubs}}, values %{$self->{directories}});
-			foreach my $e (sort {$a->modification_time <=> $b->modification_time} @entries) {
-				my $entry = XML::Atom::Entry->new();
-				$entry->title($e->title);
-				
-				my ($day, $mon, $year) = (localtime $e->modification_time)[3..5];
-				$entry->updated(sprintf "%04d-%02d-%02d", 1900 + $year, 1 + $mon, $day);
-
-				my $link = XML::Atom::Link->new();
-				$link->rel('self');
-				$link->type('text/html');
-				$link->href($e->uri);
-				$entry->add_link($link);
-
-				$e->populate_entry($entry, $env);
-				$feed->add_entry($entry);
-			}
-			if (my $parent_link = $self->parent_link) {
-				$feed->add_link($parent_link);
-			}
-			if ($request->param('type') and $request->param('type') eq 'atom') {
-				return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
-			}
-			else {
-				return [200, ['Content-type', 'text/html'], [Attic::Template->transform('directory', $feed->elem->ownerDocument)]];
-			}
-		}
+	if ($request->param('type') and $request->param('type') eq 'atom') {
+		return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
 	}
 	else {
-		my ($parent_uri, $name) = __PACKAGE__->pop_name($request->uri);
-		if ($parent_uri and $parent_uri->path eq $self->{uri}->path) {
-			# show hub or serve file
-			if (my $hub_app = $self->hub_app($name)) {
-				return $hub_app->($env);
-			}
-			elsif (my $file_app = $self->file_app($name)) {
-				return $file_app->($env);
-			}
+		return [200, ['Content-type', 'text/html'], [Attic::Template->transform('directory', $feed->elem->ownerDocument)]];
+	}
+}
+
+sub random_image {
+	my $self = shift;
+	my ($request, $feed_uri) = @_;
+	my $sth = $self->{router}->{db}->sh->prepare("
+SELECT m.Uri, i.Width, i.Height FROM Image i
+JOIN Media m ON i.MediaId = m.Id
+WHERE m.Uri LIKE '$feed_uri%'
+	");
+	$sth->execute();
+	my $s = [];
+	while (my $row = $sth->fetchrow_hashref) {
+		my $w = $row->{Width};
+		my $h = $row->{Height};
+		if ($w > $h and $w > 800 and $h > 600) {
+			push @$s, $row->{Uri}; 
 		}
 	}
-	# the only thing left is to show 404
+	my $n = scalar @$s;
+	my $uri = $s->[int(rand($n))];
+	my $media = $self->{router}->{db}->load_media($uri);
+	return $self->{router}->{media}->process($request, $media);
+}
+
+sub process {
+	my $self = shift;
+	my ($request, $feed) = @_;
+	my $uri = URI->new($request->uri->path);
+	my ($self_link) = grep {$_->rel eq 'self'} $feed->link;
+	my $feed_uri = URI->new($self_link->href);
+	if (my $media = $self->{router}->{db}->load_media($uri)) {
+		return $self->{router}->{media}->process($request, $media);
+	}
+	elsif ($feed_uri eq $uri) {
+		if ($request->uri->query_param('type') eq 'image' and $request->uri->query_param('q') eq 'random') {
+			# random picture
+			return $self->random_image($request, $feed_uri);
+		}
+		# process directory
+		my $index_uri = $self->{router}->{db}->append_entry($feed_uri, 'index');
+		if (my $entry = $self->{router}->{db}->load_entry($index_uri)) {
+			# display index page
+			if (my $parent_link = $self->{router}->{db}->parent_link($uri)) {
+				$entry->add_link($parent_link);
+			}
+			my $response = $self->{router}->{page}->process($request, $entry);
+			$self->{router}->{db}->update_feed($uri, $entry->title, $entry->updated);
+			if ($entry->content) {
+				return $response;
+			}
+			else {
+				return $self->make_directory_listing($request, $feed, $uri);
+			}
+		}
+		else {
+			return $self->make_directory_listing($request, $feed, $uri);
+		}
+	}
+	elsif (my $entry = $self->{router}->{db}->load_entry($uri)) {
+		# process page
+		foreach my $link ($self->{router}->{db}->sibling_links($uri)) {
+			$entry->add_link($link) if $link;
+		}
+		if (my $parent_link = $self->{router}->{db}->parent_link($uri)) {
+			$entry->add_link($parent_link);
+		}
+		return $self->{router}->{page}->process($request, $entry);
+	}
+	elsif ($uri !~ /\/$/) {
+		# redirect to URI with / at the end 
+		$uri->path($uri->path . '/');
+		if ($self->{router}->{db}->load_feed($uri)) {
+			my $f_uri = $request->uri;
+			$f_uri->path($uri->path);
+			return [301, ['Location' => $f_uri], ["follow $f_uri"]];
+		}
+	}
+	# the only option left is to give up and show 404
+	return $self->not_found($request, $feed_uri, $feed->title);
+}
+
+sub not_found {
+	my $self = shift;
+	my ($request, $uri, $title) = @_;
 	my $entry = XML::Atom::Entry->new();
 	my $inline = XML::Atom::Ext::Inline->new();
 	my $feed = XML::Atom::Feed->new();
-	if (my $parent_link = $self->parent_link) {
+	if (my $parent_link = $self->{router}->{db}->parent_link($uri)) {
 		$feed->add_link($parent_link);
 	}
-	$feed->title($self->title);
+	$feed->title($title);
 	$inline->atom($feed);
 	my $link = XML::Atom::Link->new();
-	$link->href($self->uri);
+	$link->href($uri);
 	$link->rel('up');
 	$link->type('text/html');
 	$link->inline($inline);
@@ -295,3 +141,4 @@ sub call {
 }
 
 1;
+

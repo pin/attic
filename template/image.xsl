@@ -27,7 +27,7 @@ YUI().use('node', 'event', function (Y) {
   Y.on("domready", function() {
     Y.all("link.navigation").each(function(link) {
       if(link.get('rel') == 'next') {
-        var node = Y.Node.create('<a href="' + link.get('href') + '"><div class="next-link"></div></a>');
+        var node = Y.Node.create('<a href="' + link.get('href') + '" title="' + link.get('title') + '"><div class="next-link"></div></a>');
         Y.one("body").appendChild(node);
       }
     });

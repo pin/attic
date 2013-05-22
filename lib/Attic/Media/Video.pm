@@ -1,0 +1,96 @@
+package Attic::Media::Video;
+
+use warnings;
+use strict;
+
+use File::Spec;
+use Log::Log4perl;
+use URI;
+use File::Path;
+use Attic::Config;
+use Attic::Util;
+use File::Basename;
+use Data::Dumper;
+
+use base 'Attic::Media::Base';
+
+my $log = Log::Log4perl->get_logger();
+
+sub accept {
+	my $self = shift;
+	my ($media) = @_;
+	my ($type, $subtype) = split /\//, $media->{type};
+	if ($type eq 'video') {
+		return 1;
+	}
+	return 0;
+}
+
+sub process {
+	my $self = shift;
+	my ($request, $media) = @_;
+	my ($path, $s);
+	if ($request->uri->query_param('type') and $request->uri->query_param('type') eq 'image') {
+		eval {
+			($path, $s) = $self->video_thumbnail_cache($media);
+		};
+		if (my $error = $@) {
+			return [500, ['Content-type', 'text/plain'], ["can't load video thumbnail: $error"]];
+		}
+	}
+	else {
+		eval {
+			($path, $s) = $self->video_cache($media);
+		};
+		if (my $error = $@) {
+			return [500, ['Content-type', 'text/plain'], ["can't load video: $error"]];
+		}
+	}
+	return Attic::Media->serve_file($request, $path, $s);
+}
+
+sub video_thumbnail_cache {
+	my $self = shift;
+	my ($media) = @_;
+	my $path = $self->{router}->path(URI->new($media->{uri}));
+	my $cache_path_base = $media->{uri};
+	$cache_path_base =~ s/^\///;
+	$cache_path_base .= '.jpg';
+	my $tmp_cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base . '.tmp.jpg');
+	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base . '.jpg');
+	my @cache_s = stat $cache_path or $log->debug("cache $cache_path is missing: $!");
+	return ($cache_path, \@cache_s) if @cache_s and $cache_s[9] > $media->{updated};
+	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
+	unlink $tmp_cache_path if -f $tmp_cache_path;
+	my ($retcode, $stdout, $stderr) = Attic::Util->system_ex('/usr/bin/ffmpeg -i ' . $path
+		. ' -vframes 1 -s 320x200 ' . $tmp_cache_path, $log);
+	die "can't process $path: retcode=$retcode" if $retcode;
+	rename $tmp_cache_path, $cache_path or die "can't commit $tmp_cache_path: $!";
+	@cache_s = stat $cache_path or die "can't create $cache_path: $!";
+	return ($cache_path, \@cache_s);
+}
+
+sub video_cache {
+	my $self = shift;
+	my ($media) = @_;
+	my $path = $self->{router}->path(URI->new($media->{uri}));
+	my $cache_path_base = $media->{uri};
+	$cache_path_base =~ s/^\///;
+	my $tmp_cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base. '.tmp.mp4');
+	my $cache_path = File::Spec->catfile(Attic::Config->value('cache_dir'), $cache_path_base. '.mp4');
+	my @cache_s = stat $cache_path or $log->debug("cache $cache_path is missing: $!");
+	return ($cache_path, \@cache_s) if @cache_s and $cache_s[9] > $media->{updated};
+	my $start_time = time;
+	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
+	unlink $tmp_cache_path if -f $tmp_cache_path;
+	my ($retcode, $stdout, $stderr) = Attic::Util->system_ex('/usr/bin/ffmpeg -i ' . $path
+		. ' -acodec libfaac -ab 128k -vcodec libx264 -pix_fmt yuv420p -preset slow -crf 30 -threads 0 -s 854x480 '
+			. $tmp_cache_path, $log);
+	die "can't process $path: retcode=$retcode" if $retcode;
+	rename $tmp_cache_path, $cache_path or die "can't commit $tmp_cache_path: $!";
+	@cache_s = stat $cache_path or die "can't create $cache_path: $!";
+	$log->info("$cache_path created in " . (time - $start_time) . " second(s)");
+	return ($cache_path, \@cache_s);
+}
+
+1;
