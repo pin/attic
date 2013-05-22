@@ -236,16 +236,6 @@ WHERE e.Uri = ?
 	return $entry;
 }
 
-#sub update_entry {
-#	my $self = shift;
-#	my ($uri, $title, $updated) = @_;
-#	warn $title . "->" . $uri;
-#	my $sth = $self->sh->prepare("
-#UPDATE Entry SET Title = ? WHERE Uri = ?
-#	");
-#	$sth->execute($title, $uri);
-#}
-
 sub update_entry {
 	my $self = shift;
 	my ($uri, $title, $updated) = @_;
