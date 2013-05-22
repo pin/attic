@@ -4,7 +4,7 @@ all:
 clean:
 	# do nothing
 
-install: 
+install: test
 	install -m755 attic.pl $(DESTDIR)/usr/bin/attic
 
 	install -d $(DESTDIR)/usr/lib/attic/
@@ -30,18 +30,24 @@ install:
 
 	install -d $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Router.pm $(DESTDIR)/usr/share/perl5/Attic/
-	install -m644 lib/Attic/Hub.pm $(DESTDIR)/usr/share/perl5/Attic/
+	install -m644 lib/Attic/Media.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Directory.pm $(DESTDIR)/usr/share/perl5/Attic/
-	install -m644 lib/Attic/File.pm $(DESTDIR)/usr/share/perl5/Attic/
+	install -m644 lib/Attic/Db.pm $(DESTDIR)/usr/share/perl5/Attic/
+	install -m644 lib/Attic/Page.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Template.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Util.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Config.pm $(DESTDIR)/usr/share/perl5/Attic/
 
-	install -d $(DESTDIR)/usr/share/perl5/Attic/Hub/
-	install -m644 lib/Attic/Hub/Image.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
-	install -m644 lib/Attic/Hub/None.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
-	install -m644 lib/Attic/Hub/Video.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
-	install -m644 lib/Attic/Hub/Page.pm $(DESTDIR)/usr/share/perl5/Attic/Hub/
+	install -d $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Markup.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Movie.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Picture.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Proxy.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+
+	install -d $(DESTDIR)/usr/share/perl5/Attic/Media/
+	install -m644 lib/Attic/Media/File.pm $(DESTDIR)/usr/share/perl5/Attic/Media/
+	install -m644 lib/Attic/Media/Image.pm $(DESTDIR)/usr/share/perl5/Attic/Media/
+	install -m644 lib/Attic/Media/Video.pm $(DESTDIR)/usr/share/perl5/Attic/Media/
 
 	install -d $(DESTDIR)/usr/lib/attic/static/
 	install -d $(DESTDIR)/usr/lib/attic/static/css/
@@ -51,4 +57,4 @@ install:
 	install -m664 static/images/xkcd-404.gif $(DESTDIR)/usr/lib/attic/static/images/
 
 test:
-	CONFIG_PATH=`pwd`/etc/home.conf prove -l lib t/plack.t
+#	CONFIG_PATH=`pwd`/etc/home.conf prove -l lib t/plack.t
