@@ -1,3 +1,9 @@
+attic (0.1-2) unstable; urgency=low
+
+  * sqlite instead of objects in memory
+
+ -- Dmitri Popov <operator@cv.dp-net.com>  Wed, 22 May 2013 15:13:07 -0400
+
 attic (0.1-1) unstable; urgency=low
 
   * build test
