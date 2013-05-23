@@ -144,6 +144,8 @@ sub make_thumbnail {
 	my $start_time = time;
 	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
 	my $image = Image::Magick->new();
+	$image->Set('memory-limit' => 67108864);
+	$image->Set('map-limit' => 134217728);
 	my $error = $image->Read($path);
 	die "can't read image " . $path . ": " . $error if $error; 
 	$image->Strip();
