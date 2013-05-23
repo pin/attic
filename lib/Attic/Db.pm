@@ -370,6 +370,8 @@ sub append_feed {
 
 package Attic::Db::UpdateTransaction;
 
+use Time::HiRes qw(gettimeofday tv_interval);
+
 sub new {
 	my $class = shift;
 	my $self = bless {@_}, $class;
@@ -377,6 +379,7 @@ sub new {
 	die 'missing URI' unless $self->{uri};
 
 	$self->{dbh}->do('BEGIN EXCLUSIVE TRANSACTION');
+	$self->{start_time} = [gettimeofday];
 	$self->{in_transaction} = 1;
 
 	{
@@ -566,7 +569,8 @@ WHERE FeedId = ?
 
 	$self->{dbh}->do('COMMIT TRANSACTION');
 	$self->{in_transaction} = 0;
-	$log->info("$self->{uri} reindex complete");
+	my $elapsed_time = tv_interval($self->{start_time});
+	$log->info("$self->{uri} reindex complete in $elapsed_time seconds");
 }
 
 sub DESTROY {
