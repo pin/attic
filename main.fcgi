@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Plack::Handler::FCGI;
+use Plack::Handler::FCGI; # HACK: http://www.fastcgi.com/docs/faq.html#Perlfork
 use FindBin;
 use File::Spec;
 

@@ -170,6 +170,13 @@ sub make_thumbnail {
 		}
 		$self->{router}->{db}->update_image($media->{uri}, $imageWidth, $imageHeight);
 	}
+	if (my $annotation = Attic::Config->value('image_annotation') and $px > 500) {
+		my @font_metrics = $image->QueryFontMetrics(text => $annotation, pointsize => 13.5);
+		if (my $error = $image->Annotate(text => $annotation, gravity => 'SouthEast', antialias => 1,
+				rotate => 270, geometry => '+5+' . ($font_metrics[4] + 7), fill=>'gray', pointsize => 13.5)) {
+			$log->error($error);
+		}
+	}
 	$image->Write(filename => $cache_path);
 	$cache_et->ExtractInfo($cache_path);
 	$cache_et->SetNewValue('IFD1:Orientation' => 1, Type => 'ValueConv');
