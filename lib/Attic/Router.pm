@@ -40,9 +40,8 @@ sub call {
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
 	my $uri = URI->new($request->uri->path);
-	$self->discover($uri);
 	while ($uri) {
-		if (my $feed = $self->{db}->load_feed($uri)) {
+		if (my $feed = $self->discover_feed($uri)) {
 			return $self->{directory}->process($request, $feed);
 		}
 		($uri, undef) = Attic::Db->pop_name($uri);
@@ -50,17 +49,19 @@ sub call {
 	return [500, ['Content-type', 'text/plain'], ['shit happens']];
 }
 
-sub discover {
+sub discover_feed {
 	my $self = shift;
 	my ($uri) = @_;
-
 	my $path = $self->path($uri);
 	my @s = stat $path;
-	
 	return undef unless @s and my $is_other_readable = $s[2] & S_IROTH;
 	return undef if S_ISREG($s[2]);
 	return undef unless S_ISDIR($s[2]) and $uri =~ /\/$/;
-	
+	if (my $feed = $self->{db}->load_feed($uri)) {
+		warn $feed->{updated_ts};
+		warn $s[9];
+		return $feed if $feed->{updated_ts} == $s[9];
+	}
 	opendir my $dh, $path or die "can't open $path: $!";
 	my $dt = Attic::Db::UpdateTransaction->new(dbh => $self->{db}->sh, uri => $uri);
 	while (my $f = readdir $dh) {
@@ -90,8 +91,9 @@ sub discover {
 			$dt->process_feed($f_uri, $f_s[9]);
 		}
 	}
-	$dt->commit();
+	$dt->commit($s[9]);
 	closedir $dh;
+	return $self->{db}->load_feed($uri);
 }
 
 1;

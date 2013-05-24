@@ -101,7 +101,7 @@ sub load_feed {
 	my $class = shift;
 	my ($uri) = @_;
 	my $sth = $class->sh->prepare("
-SELECT Id, Title, strftime('%Y-%m-%d', Updated) AS Updated FROM Feed
+SELECT Id, Title, strftime('%Y-%m-%d', Updated) AS Updated, strftime('%s', Updated) AS UpdatedTs FROM Feed
 WHERE Uri = ?
 	");
 	$sth->execute($uri);
@@ -121,6 +121,7 @@ WHERE Uri = ?
 	$link->href($uri);
 	$feed->add_link($link);
 	$feed->updated($row->{Updated});
+	$feed->{updated_ts} = $row->{UpdatedTs}; # UNIX timestamp to compare with directory mtime
 	return $feed;
 }
 
@@ -402,6 +403,10 @@ INSERT INTO LocalFeed (Id) VALUES (?)
 SELECT Id FROM Feed
 WHERE Uri = ?
 	");
+	
+	$self->{sth}->{update_feed_timestamp} = $self->{dbh}->prepare("
+UPDATE Feed SET Updated = DATETIME(?, 'unixepoch') WHERE Id = ?
+	");
 
 	$self->{dbh}->do('
 CREATE TEMPORARY TABLE LocalMedia (Id INTEGER NOT NULL)
@@ -441,11 +446,12 @@ sub process_feed {
 	die 'completely broken URI: $uri' unless $self->{uri} eq $parent_uri;
 	$self->{sth}->{select_feed}->execute($uri);
 	if (my $row = $self->{sth}->{select_feed}->fetchrow_hashref) {
+		$self->{sth}->{update_feed_timestamp}->execute($updated_time, $row->{Id});
 		$self->{sth}->{insert_local_feed}->execute($row->{Id});
 	}
 	else {
 		$self->{dbh}->do("
-INSERT INTO Feed (FeedId, Updated, Uri) VALUES (?, DATETIME(?, 'unixepoch', 'localtime'), ?)
+INSERT INTO Feed (FeedId, Updated, Uri) VALUES (?, DATETIME(?, 'unixepoch'), ?)
 		", {}, $self->{feed_id}, $updated_time, $uri);
 		my $sth = $self->{dbh}->prepare("SELECT last_insert_rowid()");
 		$sth->execute();
@@ -466,7 +472,7 @@ sub process_media {
 	}
 	else {
 		$self->{dbh}->do("
-INSERT INTO Media (FeedId, Updated, Uri, Type) VALUES (?, DATETIME(?, 'unixepoch', 'localtime'), ?, ?)
+INSERT INTO Media (FeedId, Updated, Uri, Type) VALUES (?, DATETIME(?, 'unixepoch'), ?, ?)
 		", {}, $self->{feed_id}, $updated_time, $uri, $content_type);
 		my $sth = $self->{dbh}->prepare("SELECT last_insert_rowid()");
 		$sth->execute();
@@ -488,7 +494,7 @@ INSERT INTO Media (FeedId, Updated, Uri, Type) VALUES (?, DATETIME(?, 'unixepoch
 		}
 		else {
 			$self->{dbh}->do("
-INSERT INTO Entry (Title, Updated, Uri) VALUES (?, DATETIME(?, 'unixepoch', 'localtime'), ?)
+INSERT INTO Entry (Title, Updated, Uri) VALUES (?, DATETIME(?, 'unixepoch'), ?)
 			", {}, $e, $updated_time, $e_uri);
 			my $sth = $self->{dbh}->prepare("SELECT last_insert_rowid()");
 			$sth->execute();
@@ -507,6 +513,9 @@ INSERT INTO MediaEntry (MediaId, EntryId) VALUES (?, ?)
 
 sub commit {
 	my $self = shift;
+	my ($updated_time) = @_;
+	
+	$self->{sth}->{update_feed_timestamp}->execute($updated_time, $self->{feed_id});
 
 	$self->{dbh}->do("
 DELETE FROM Entry 
