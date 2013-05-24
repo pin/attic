@@ -58,8 +58,6 @@ sub discover_feed {
 	return undef if S_ISREG($s[2]);
 	return undef unless S_ISDIR($s[2]) and $uri =~ /\/$/;
 	if (my $feed = $self->{db}->load_feed($uri)) {
-		warn $feed->{updated_ts};
-		warn $s[9];
 		return $feed if $feed->{updated_ts} == $s[9];
 	}
 	opendir my $dh, $path or die "can't open $path: $!";
