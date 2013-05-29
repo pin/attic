@@ -75,6 +75,20 @@ MediaId TEXT NOT NULL,
 FOREIGN KEY(MediaId) REFERENCES Media(Id) ON DELETE CASCADE
 	)');
 	$dbh->do('COMMIT TRANSACTION');
+	
+	$dbh->do('
+CREATE TRIGGER DeleteDirectoryContents BEFORE DELETE ON Feed
+BEGIN
+	DELETE FROM Entry 
+	WHERE Id IN (
+		SELECT EntryId FROM MediaEntry me
+		JOIN Media m ON me.MediaId = m.Id
+		WHERE m.FeedId = OLD.Id
+	);
+	DELETE FROM Media WHERE FeedId = OLD.Id;
+END
+	');
+
 	$log->info("database at $self->{path} initialized");
 }
 
