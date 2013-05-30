@@ -544,32 +544,6 @@ WHERE Id IN (
 	)
 	", {}, $self->{uri});
 
-#	$self->{dbh}->do("
-#DELETE FROM MediaEntry
-#WHERE MediaId IN (
-#	SELECT m.Id FROM Media m
-#	JOIN Feed f ON m.FeedId = f.Id
-#	WHERE f.Uri = ?
-#)
-#	AND EntryId NOT IN (
-#		SELECT Id FROM LocalEntry
-#	)
-#	AND MediaId NOT IN (
-#		SELECT Id FROM LocalMedia
-#	)
-#	", {}, $self->{uri});
-#
-#	$self->{dbh}->do("
-#DELETE FROM Image 
-#WHERE MediaId IN (
-#		SELECT Id FROM Media
-#		WHERE FeedId = ?
-#			AND Id NOT IN (
-#				SELECT Id FROM LocalMedia
-#			)
-#	)
-#	", {}, $self->{feed_id});
-
 	$self->{dbh}->do("
 DELETE FROM Media 
 WHERE FeedId = ?
