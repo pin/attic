@@ -1,5 +1,3 @@
-# plackup -Ilib -r -R template
-
 use warnings;
 use strict;
 
@@ -34,8 +32,7 @@ else {
 	Log::Log4perl::init(\$log_conf);
 }
 
-my $dir = Attic::Router->new(documents_dir => Attic::Config->value('documents_dir'));
-my $app = $dir->to_app;
+my $app = Attic::Router->new(documents_dir => Attic::Config->value('documents_dir'))->to_app();
 
 builder {
 	enable "Plack::Middleware::Static", path => qr{^/(images|js|css|fonts)/}, root => File::Spec->catdir($FindBin::Bin, 'static');
@@ -75,5 +72,6 @@ builder {
 			or s!^/photo/0314/(.*)-(\d\d)\.1\.jpg$!/2005/usinsk/0314/$2-$1.tif!
 			or 0;
 	};
+#	enable "Plack::Middleware::XSendfile", variation => 'X-Lighttpd-Send-File';
 	$app;
 };
