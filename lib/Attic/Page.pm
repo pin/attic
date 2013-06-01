@@ -53,7 +53,9 @@ sub process {
 		return $module->process($request, $entry);
 	}
 	else {
-		return [404, ['Content-type', 'text/plain'], ['no page module']];
+		my ($parent_uri, $name) = Attic::Db->pop_name(URI->new($request->uri->path));
+		my $feed = $self->{router}->{db}->load_feed($parent_uri);
+		return $self->{router}->{directory}->not_found($request, $parent_uri, $feed->title);
 	}
 }
 

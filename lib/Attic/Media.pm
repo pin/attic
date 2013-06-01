@@ -9,6 +9,7 @@ use HTTP::Message;
 use HTTP::Date;
 use Cwd;
 use Plack::Util;
+use Data::Dumper;
 
 use Module::Pluggable search_path => 'Attic::Media', sub_name => 'modules', require => 1, except => 'Attic::Media::Base';
 
@@ -41,13 +42,16 @@ sub process {
 		return $module->process($request, $media);
 	}
 	else {
-		return [404, ['Content-type', 'text/plain'], ['no media module']];
+		my ($parent_uri, $name) = Attic::Db->pop_name(URI->new($request->uri->path));
+		my $feed = $self->{router}->{db}->load_feed($parent_uri);
+		return $self->{router}->{directory}->not_found($request, $parent_uri, $feed->title);
 	}
 }
 
 sub serve_file {
 	my $class = shift;
 	my ($request, $path, $s) = @_;
+	my $content_type = Plack::MIME->mime_type($path) || 'application/octet-stream';
 	if(my $range = $request->env->{HTTP_RANGE}) {
 		$range =~ s/^bytes=// or return [416, ['Content-Type' => 'text/plain'], ["Invalid Request Range: $range"]];
 		my @ranges = split /\s*,\s*/, $range
@@ -67,7 +71,7 @@ sub serve_file {
 				sysseek $fh, $start, 0;
 				sysread $fh, $buf, ($end - $start + 1);
 				$msg->add_part(HTTP::Message->new([
-					'Content-Type' => Plack::MIME->mime_type($path),
+					'Content-Type' => $content_type,
 					'Content-Range' => "bytes $start-$end/$length"
 				], $buf));
 			}
@@ -81,7 +85,7 @@ sub serve_file {
 				or return [500, ['Content-type', 'text/plain'], ["can't open $path: $!"]];
 			Plack::Util::set_io_path($fh, Cwd::realpath($path));
 			return [206, [
-				'Content-Type' => Plack::MIME->mime_type($path),
+				'Content-Type' => $content_type,
 				'Content-Range' => "bytes $start-$end/$length",
 				'Last-Modified' => HTTP::Date::time2str($s->[9]),
 				'Content-Length' => $end + 1 - $start
@@ -93,11 +97,10 @@ sub serve_file {
 			or return [500, ['Content-type', 'text/plain'], ["can't open $path: $!"]];
 		Plack::Util::set_io_path($fh, Cwd::realpath($path));
 		return [ 200, [
-			'Content-Type' => Plack::MIME->mime_type($path),
+			'Content-Type' => $content_type,
 			'Content-Length' => $s->[7],
 			'Last-Modified' => HTTP::Date::time2str($s->[9])
-		], $fh];		
-		return [200, ['Content-type' => 'text/html'], ["follow me: $path"]];
+		], $fh];
 	}
 }
 
