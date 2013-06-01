@@ -3,22 +3,12 @@ package Attic::Media;
 use warnings;
 use strict;
 
-#use Data::Dumper;
 use Log::Log4perl;
-#use File::Spec;
 use Plack::MIME;
-#use Plack::Util;
-#use URI;
-#use Image::ExifTool;
-#use File::Path;
-#use Image::Magick;
-#use Fcntl ':mode';
-#use Attic::Config;
-#use URI::QueryParam;
-#use Attic::Util;
-#use PerlIO::subfile;
 use HTTP::Message;
-#use HTTP::Date;
+use HTTP::Date;
+use Cwd;
+use Plack::Util;
 
 use Module::Pluggable search_path => 'Attic::Media', sub_name => 'modules', require => 1, except => 'Attic::Media::Base';
 
@@ -152,5 +142,7 @@ sub priority { 10 }
 sub process {
 	die 'not implemented';
 }
+
+sub index { }
 
 1;

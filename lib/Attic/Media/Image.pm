@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use File::Basename;
-
 use Data::Dumper;
 use Log::Log4perl;
 use File::Spec;
@@ -47,9 +46,11 @@ sub process {
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
-		if ($px > 1200) {
+		my $standard_px = $self->fit_px($px);
+		if ($standard_px != $px) {
 			my $uri = $request->uri;
-			$uri->query_param('px', 1200);
+			$uri->query_param_delete('size');
+			$uri->query_param('px', $standard_px);
 			return [301, ['Location' => $uri], ["follow $uri"]];
 		}
 		eval {
@@ -62,18 +63,35 @@ sub process {
 	else {
 		my $uri = $request->uri;
 		$uri->query_param('px', 800);
+		$uri->query_param_delete('size');
 		return [301, ['Location' => $uri], ["follow $uri"]];
 	}
 	return Attic::Media->serve_file($request, $path, $s);
 }
 
-my @size_step = (300, 350, 450, 600, 800, 1000, 1200);
+our @aspects = (300, 350, 450, 600, 800, 1000, 1200);
+
+sub fit_px {
+	my $class = shift;
+	my ($px) = @_;
+	my $standard_px = $aspects[0];
+	foreach my $aspect (@aspects) {
+		if ($aspect > $px) {
+			last;
+		}
+		else {
+			$standard_px = $aspect;
+		}
+	}
+	return $standard_px;
+}
+
 sub calculate_px {
 	my $class = shift;
 	my ($clientWidth, $clientHeight, $imageWidth, $imageHeight) = @_;
-	my $px = $size_step[0];
+	my $px = $aspects[0];
 	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
-		foreach my $s (@size_step) {
+		foreach my $s (@aspects) {
 			if ($clientHeight > $s) {
 				$px = $s;
 			}
@@ -86,7 +104,7 @@ sub calculate_px {
 		}
 	}
 	else {
-		foreach my $s (@size_step) {
+		foreach my $s (@aspects) {
 			if ($clientWidth > $s) {
 				$px = $s;
 			}
@@ -98,8 +116,7 @@ sub calculate_px {
 			$px = $imageHeight / $imageWidth * $px;
 		}
 	}
-	$px = int $px;
-	return $px;
+	return $class->fit_px($px);
 }
 
 sub lookup_thumbnail {
@@ -111,9 +128,7 @@ sub lookup_thumbnail {
 	if (@cache_s and $cache_s[9] > $media->{updated}) {
 		return ($cache_path, \@cache_s);
 	}
-	$self->make_thumbnail($path, $media, $px);
-#	$self->make_thumbnail($path, $media, 1000) if $px == 300;
-#	$self->make_thumbnail($path, $media, 1200) if $px == 800;
+	$self->make_thumbnail($path, $media, \@aspects);
 	@cache_s = stat $cache_path or die "can't make $cache_path: $!";
 	return ($cache_path, \@cache_s);
 }
@@ -133,26 +148,23 @@ my $cache_et = Image::ExifTool->new();
 
 sub make_thumbnail {
 	my $self = shift;
-	my ($path, $media, $px) = @_;
-	my $cache_path = $self->thumbnail_path($media, $px);
+	my ($path, $media, $aspects) = @_;
 	my $start_time = time;
-	File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
 	my $image = Image::Magick->new();
 	$image->Set('memory-limit' => 67108864);
 	$image->Set('map-limit' => 134217728);
-	my $error = $image->Read($path);
-	die "can't read image " . $path . ": " . $error if $error; 
+	if (my $error = $image->Read($path)) {
+		die "can't read image " . $path . ": " . $error;
+	}
 	$image->Strip();
 	$image->Set(interlace => 'Plane');
 	$image->Set(quality => 85);
 	my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
-	my $aspect_ratio = $px / ($height > $width ? $height : $width);
-	$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
-	$image->Sharpen(radius => 2);
+	my $rotate_degrees = 0;
 	if ($et->ExtractInfo($path)) {
 		$et->Options(PrintConv => 1);
 		if (defined $et->GetValue('Orientation') and $et->GetValue('Orientation') =~ m/Rotate ([0-9]+)/) {
-			$image->Rotate(degrees => $1);
+			$rotate_degrees = $1;
 		}
 		$et->Options(PrintConv => 0);
 		my $i = $et->GetInfo('ImageWidth', 'ImageHeight', 'Orientation');
@@ -160,6 +172,7 @@ sub make_thumbnail {
 		if ($orientation) {
 			if ($orientation > 4) {
 				($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
+				($height, $width) = ($width, $height);
 			}
 		}
 		elsif (my $rotation = $et->GetInfo('Rotation')->{Rotation}) {
@@ -170,19 +183,35 @@ sub make_thumbnail {
 		}
 		$self->{router}->{db}->update_image($media->{uri}, $imageWidth, $imageHeight);
 	}
-	if (my $annotation = Attic::Config->value('image_annotation') and $px > 500) {
-		my @font_metrics = $image->QueryFontMetrics(text => $annotation, pointsize => 13.5);
-		if (my $error = $image->Annotate(text => $annotation, gravity => 'SouthEast', antialias => 1,
-				rotate => 270, geometry => '+5+' . ($font_metrics[4] + 7), fill=>'lightgray', pointsize => 13.5)) {
-			$log->error($error);
+	for my $px (sort {$a < $b} @$aspects) {
+		my $cache_path = $self->thumbnail_path($media, $px);
+		File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
+		my $aspect_ratio = $px / ($height > $width ? $height : $width);
+		$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
+		if ($rotate_degrees != 0) {
+			$image->Rotate(degrees => $rotate_degrees);
+			$rotate_degrees = 0;
 		}
+		my $image = $image->Clone();
+		$image->Sharpen(radius => 2);
+		if (my $annotation = Attic::Config->value('image_annotation') and $px > 500) {
+			my @font_metrics = $image->QueryFontMetrics(text => $annotation, pointsize => 13.5);
+			if (my $error = $image->Annotate(text => $annotation, gravity => 'SouthEast', antialias => 1,
+					rotate => 270, geometry => '+5+' . ($font_metrics[4] + 7), fill=>'lightgray', pointsize => 13.5)) {
+				$log->error('error annotate image: ' . $error);
+			}
+		}
+		$image->Write(filename => $cache_path);
+		$cache_et->ExtractInfo($cache_path);
+		$cache_et->SetNewValue('IFD1:Orientation' => 1, Type => 'ValueConv');
+		$cache_et->SetNewValue('EXIF:Orientation' => 1, Type => 'ValueConv');
+		$cache_et->WriteInfo($cache_path);
 	}
-	$image->Write(filename => $cache_path);
-	$cache_et->ExtractInfo($cache_path);
-	$cache_et->SetNewValue('IFD1:Orientation' => 1, Type => 'ValueConv');
-	$cache_et->SetNewValue('EXIF:Orientation' => 1, Type => 'ValueConv');
-	$cache_et->WriteInfo($cache_path);
-	$log->info("$cache_path was generated in " . (time - $start_time) . ' second(s)');
+	$log->info("$path was indexed in " . (time - $start_time) . ' seconds');
+}
+
+sub index {
+	shift->make_thumbnail(@_, \@aspects);
 }
 
 1;
