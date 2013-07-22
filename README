@@ -7,7 +7,6 @@ Install on Debain server
 	# cp /etc/attic/lighttpd.conf /etc/lighttpd/conf-enabled/10-attic.conf
 	
 	check /etc/attic/default.conf
-	enable X-Sendfile in /usr/lib/attic/app.psgi (this step will be avoided in lighttpd 1.5)
 
 how to run it in development
 
