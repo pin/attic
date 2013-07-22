@@ -10,13 +10,14 @@ use File::Spec;
 use URI;
 use Attic::Directory;
 use Attic::Router;
+use Attic::Media::Image;
 use Data::Dumper;
 
 use Log::Log4perl qw(:easy);
 
 # do not use colored log with TM or cron
 my $log_conf = $ENV{TERM} ? q(
-	log4perl.rootLogger = DEBUG, console
+	log4perl.rootLogger = INFO, console
 	log4perl.appender.console = Log::Log4perl::Appender::ScreenColoredLevels
 	log4perl.appender.console.layout = SimpleLayout
 ) : q(
@@ -52,18 +53,34 @@ sub run_index {
 	}
 }
 
-sub load_file {
+sub load_media {
 	my $class = shift;
 	my ($path) = @_;
 	my @s = stat $path or die "can't open $path: $!";
 	die "not a file: $path" unless -f $path;
 	my $documents_dir = Attic::Config->value('documents_dir');
-	my $uri = URI->new(File::Spec->abs2rel($path, $documents_dir));
+	my $uri = URI->new('/' . File::Spec->abs2rel($path, $documents_dir));
 	my ($dir_uri, $name) = Attic::Db->pop_name($uri);
-	my $router = Attic::Router->new(documents_dir => Attic::Config->value('documents_dir'));
-	$router->prepare_app();
-	my $dir = $router->discover_feed($dir_uri);
-	return Attic::File->new(dir => $dir, name => $name, status => \@s);
+	my $dir = $router->discover_feed(URI->new($dir_uri));
+	return $router->{db}->load_media($uri);
+}
+
+sub media_field {
+	my $class = shift;
+	my ($path, $name, $value, $is_delete) = @_;
+	my $media = $class->load_media($path);
+	my $image = Attic::Media::Image->new(router => $router);
+	if ($value) {
+		$image->xmp_param($media, 'dc', $name, $value);
+		print $image->xmp_param($media, 'dc', $name) . "\n";
+	}
+	elsif ($is_delete) {
+		$image->xmp_param($media, 'dc', $name, undef);
+	}
+	else {
+		my $value = $image->xmp_param($media, 'dc', $name);
+		print $value . "\n" if defined $value;
+	}
 }
 
 sub run_title {
@@ -74,18 +91,7 @@ sub run_title {
 	my ($path, $title) = @_;
 	die "missing path\n" . $class->help_title unless $path;
 	die "ambigous options\n" . $class->help_title if $title and $is_delete;
-	my $file = $class->load_file($path);
-	if ($title) {
-		$file->xmp_param('dc', 'Title', $title);
-		print $file->xmp_param('dc', 'Title') . "\n";
-	}
-	elsif ($is_delete) {
-		$file->xmp_param('dc', 'Title', undef);
-	}
-	else {
-		my $title = $file->xmp_param('dc', 'Title');
-		print $title . "\n" if defined $title;
-	}
+	$class->media_field($path, 'Title', $title, $is_delete);
 }
 sub help_title { <<HELP
 usage: title [--delete] <path> [title]
@@ -100,18 +106,7 @@ sub run_description {
 	my ($path, $description) = @_;
 	die "missing path\n" . $class->help_description unless $path;
 	die "ambigous options\n" . $class->help_description if $description and $is_delete;
-	my $file = $class->load_file($path);
-	if ($description) {
-		$file->xmp_param('dc', 'Description', $description);
-		print $file->xmp_param('dc', 'Description') . "\n";
-	}
-	elsif ($is_delete) {
-		$file->xmp_param('dc', 'Description', undef);
-	}
-	else {
-		my $description = $file->xmp_param('dc', 'Description');
-		print $description . "\n" if defined $description;
-	}
+	$class->media_field($path, 'Description', $description, $is_delete);
 }
 sub help_description { <<HELP
 usage: desctiption [--delete] <path> [desctiption]

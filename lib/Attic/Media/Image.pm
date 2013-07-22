@@ -214,4 +214,57 @@ sub index {
 	shift->make_thumbnail(@_, \@aspects);
 }
 
+sub xmp_param {
+	my $self = shift;
+	my ($media, $ns, $key, $value) = @_;
+	my $path = $self->{router}->path(URI->new($media->{uri}));
+	die "cant et" unless $et->ExtractInfo($path);
+	if (@_ > 3) {
+		$et->SetNewValue('XMP-' . $ns . ':' . $key => $value);
+		unless (my $is_success = $et->WriteInfo($path)) {
+			my $error = $et->GetValue('Error');
+			die "error updating XMP value of $ns:$key at $path: $error";
+		}
+		return $value;
+	}
+	else {
+		if (my $i = $et->GetInfo({Group1 => ['XMP-' . $ns]})) {
+			return $i->{$key};
+		}
+		return undef;
+	}
+}
+
+no warnings;
+
+%Image::ExifTool::UserDefined::dpn = (
+	GROUPS => {
+		0 => 'XMP',
+		1 => 'XMP-dpn',
+		2 => 'Image'
+	},
+	NAMESPACE => {
+		'dpn' => 'http://dp-net.com/2012/XMP/Bucket'
+	},
+	Public => {
+		Writable => 'boolean'
+	},
+	Location => {
+		Writable => 'string'
+	},
+	Film => {
+		Writable => 'string'
+	}
+);
+
+%Image::ExifTool::UserDefined = (
+		'Image::ExifTool::XMP::Main' => {
+		dpn => {
+			SubDirectory => {
+				TagTable => 'Image::ExifTool::UserDefined::dpn'
+			}
+		}
+	}
+);
+
 1;

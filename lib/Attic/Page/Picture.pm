@@ -86,36 +86,4 @@ sub process {
 	}
 }
 
-no warnings;
-
-%Image::ExifTool::UserDefined::dpn = (
-	GROUPS => {
-		0 => 'XMP',
-		1 => 'XMP-dpn',
-		2 => 'Image'
-	},
-	NAMESPACE => {
-		'dpn' => 'http://dp-net.com/2012/XMP/Bucket'
-	},
-	Public => {
-		Writable => 'boolean'
-	},
-	Location => {
-		Writable => 'string'
-	},
-	Film => {
-		Writable => 'string'
-	}
-);
-
-%Image::ExifTool::UserDefined = (
-		'Image::ExifTool::XMP::Main' => {
-		dpn => {
-			SubDirectory => {
-				TagTable => 'Image::ExifTool::UserDefined::dpn'
-			}
-		}
-	}
-);
-
 1;

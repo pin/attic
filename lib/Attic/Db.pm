@@ -95,7 +95,7 @@ END
 sub h {
 	my $self = shift;
 	my $dbh = DBI->connect("dbi:SQLite:dbname=$self->{path}", undef, undef, {RaiseError => 1});
-	$log->info("database at $self->{path} connected");
+	$log->debug("database at $self->{path} connected");
 	$dbh->do('PRAGMA synchronous=OFF');
 	$dbh->do('PRAGMA foreign_keys=ON');
 	return $dbh;
@@ -403,7 +403,10 @@ SELECT Id FROM Feed
 WHERE Uri = ?
 		");
 		$sth->execute($self->{uri});
-		my $row = $sth->fetchrow_arrayref or return undef;
+		my $row = $sth->fetchrow_arrayref or do {
+			$log->warn("can't create update transaction: feed $self->{uri} not found");
+			return undef;
+		};
 		$self->{feed_id} = $row->[0];
 	}
 
