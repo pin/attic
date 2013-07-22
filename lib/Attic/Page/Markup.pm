@@ -26,13 +26,19 @@ sub populate {
 	$entry->category($category);
 }
 
+sub html_doc {
+	my $self = shift;
+	my ($entry) = @_;
+	my ($html_link) = grep {$_->type eq 'text/html' and $_->rel eq 'alternate'} $entry->link;
+	my $path = $self->{router}->path(URI->new($html_link->href));
+	return XML::LibXML->load_html(location => $path, recover => 2);
+}
+
 sub process {
 	my $self = shift;
 	my ($request, $entry) = @_;
 	$self->populate($entry);
-	my ($html_link) = grep {$_->type eq 'text/html' and $_->rel eq 'alternate'} $entry->link;
-	my $path = $self->{router}->path(URI->new($html_link->href));
-	my $html_doc = XML::LibXML->load_html(location => $path, recover => 2);
+	my $html_doc = $self->html_doc($entry);
 	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
 		$entry->updated($date);
 	}
