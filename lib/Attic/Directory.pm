@@ -81,6 +81,7 @@ sub process {
 			}
 			my $response = $self->{router}->{page}->process($request, $entry);
 			$self->{router}->{db}->update_feed($uri, $entry->title, $feed->updated);
+			$feed->title($entry->title);
 			if ($entry->content) {
 				return $response;
 			}
@@ -91,6 +92,7 @@ sub process {
 		else {
 			my (undef, $name) = Attic::Db->pop_name($uri);
 			$self->{router}->{db}->update_feed($uri, $name, $feed->updated);
+			$feed->title($name);
 			return $self->make_directory_listing($request, $feed, $uri);
 		}
 	}

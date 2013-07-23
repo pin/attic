@@ -115,7 +115,7 @@ sub load_feed {
 	my $class = shift;
 	my ($uri) = @_;
 	my $sth = $class->sh->prepare("
-SELECT Id, Title, strftime('%Y-%m-%d', Updated) AS Updated, strftime('%s', Updated) AS UpdatedTs FROM Feed
+SELECT Id, Title, Updated, strftime('%s', Updated) AS UpdatedTs FROM Feed
 WHERE Uri = ?
 	");
 	$sth->execute($uri);
@@ -143,7 +143,7 @@ sub list_feed_entries {
 	my $self = shift;
 	my ($uri) = @_;
 	my $sth = $self->sh->prepare("
-SELECT DISTINCT e.Uri, e.Title, strftime('%Y-%m-%d', e.Updated) AS Updated FROM Entry e
+SELECT DISTINCT e.Uri, e.Title, e.Updated FROM Entry e
 JOIN MediaEntry me ON e.Id = me.EntryId
 JOIN Media m ON me.MediaId = m.Id
 JOIN Feed f ON m.FeedId = f.Id
@@ -163,7 +163,7 @@ sub list_feed_feeds {
 	my $self = shift;
 	my ($uri) = @_;
 	my $sth = $self->sh->prepare("
-SELECT f.Uri, f.Title, strftime('%Y-%m-%d', f.Updated) AS Updated FROM Feed f
+SELECT f.Uri, f.Title, f.Updated FROM Feed f
 JOIN Feed pf ON f.FeedId = pf.Id
 WHERE pf.Uri = ?
 ORDER BY f.Uri
@@ -210,7 +210,7 @@ sub load_entry {
 	my $class = shift;
 	my ($uri) = @_;
 	$cache->{select_entry_by_uri} ||= $class->sh->prepare("
-SELECT Id, Title, strftime('%Y-%m-%d', Updated) AS Updated FROM Entry
+SELECT Id, Title, Updated FROM Entry
 WHERE Uri = ?
 	");
 	$cache->{select_entry_by_uri}->execute($uri);
@@ -301,7 +301,7 @@ sub load_media {
 	my $self = shift;
 	my ($uri) = @_;
 	$cache->{select_media_by_uri} ||= $self->sh->prepare("
-SELECT Title, Uri, strftime('%s', Updated) AS Updated, Type FROM Media
+SELECT Title, Uri, Updated, Type FROM Media
 WHERE Uri = ?
 	");
 	$cache->{select_media_by_uri}->execute($uri);
