@@ -42,12 +42,6 @@ sub process {
 	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
 		$entry->updated($date);
 	}
-	if (my $h1 = $html_doc->findvalue('/html/body/h1')) {
-		$entry->title($h1);
-	}
-	elsif (my $title = $html_doc->findvalue('/html/head/title')) {
-		$entry->title($title);
-	}
 	my $body = XML::LibXML::Element->new('body');
 	if (my $html_body_list = $html_doc->find('/html/body')) {
 		foreach my $node ($html_body_list->[0]->childNodes) {
@@ -62,8 +56,17 @@ sub process {
 		}
 	}
 	my ($self_link) = grep {$_->rel eq 'self'} $entry->link;
-	$self->{router}->{db}->update_entry($self_link->href, $entry->title, $entry->updated);
 	my ($parent_uri, $name) = $self->{router}->{db}->pop_name(URI->new($self_link->href));
+	if (my $h1_list = $html_doc->findnodes('/html/body/h1')) { # choose first H1 as title
+		$entry->title($h1_list->[0]->textContent);
+	}
+	elsif (my $title = $html_doc->findvalue('/html/head/title')) { # or page title
+		$entry->title($title);
+	}
+	else {
+		$entry->title($name); # or file basename
+	}
+	$self->{router}->{db}->update_entry($self_link->href, $entry->title, $entry->updated);
 	if ($name eq 'index') {
 		map {$_->href($parent_uri)} grep {$_->rel eq 'self'} $entry->link;
 	}
