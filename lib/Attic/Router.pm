@@ -58,7 +58,8 @@ sub discover_feed {
 	return undef if S_ISREG($s[2]);
 	return undef unless S_ISDIR($s[2]) and $uri =~ /\/$/;
 	if (my $feed = $self->{db}->load_feed($uri)) {
-		return $feed if $feed->{updated_ts} == $s[9];
+		$log->info("$feed->{syncronized} $s[10]");
+		return $feed if $feed->{syncronized} == $s[10];
 	}
 	opendir my $dh, $path or die "can't open $path: $!";
 	my $dt = Attic::Db::UpdateTransaction->new(dbh => $self->{db}->sh, uri => $uri);
@@ -89,7 +90,7 @@ sub discover_feed {
 			$dt->process_feed($f_uri, $f_s[9]);
 		}
 	}
-	$dt->commit($s[9]);
+	$dt->commit($s[10]);
 	closedir $dh;
 	return $self->{db}->load_feed($uri);
 }

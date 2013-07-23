@@ -29,6 +29,7 @@ Id INTEGER PRIMARY KEY AUTOINCREMENT,
 FeedId INTEGER,
 Title TEXT,
 Updated DATETIME,
+Syncronized DATETIME,
 Uri TEXT NOT NULL UNIQUE,
 FOREIGN KEY(FeedId) REFERENCES Feed(Id) ON DELETE CASCADE
 	)');
@@ -115,7 +116,7 @@ sub load_feed {
 	my $class = shift;
 	my ($uri) = @_;
 	my $sth = $class->sh->prepare("
-SELECT Id, Title, Updated, strftime('%s', Updated) AS UpdatedTs FROM Feed
+SELECT Id, Title, Updated, strftime('%s', Syncronized) AS Syncronized FROM Feed
 WHERE Uri = ?
 	");
 	$sth->execute($uri);
@@ -135,7 +136,7 @@ WHERE Uri = ?
 	$link->href($uri);
 	$feed->add_link($link);
 	$feed->updated($row->{Updated});
-	$feed->{updated_ts} = $row->{UpdatedTs}; # UNIX timestamp to compare with directory mtime
+	$feed->{syncronized} = $row->{Syncronized} || 0; # UNIX timestamp to compare with directory mtime
 	return $feed;
 }
 
@@ -301,7 +302,7 @@ sub load_media {
 	my $self = shift;
 	my ($uri) = @_;
 	$cache->{select_media_by_uri} ||= $self->sh->prepare("
-SELECT Title, Uri, Updated, Type FROM Media
+SELECT Title, Uri, strftime('%s', Updated) AS Updated, Type FROM Media
 WHERE Uri = ?
 	");
 	$cache->{select_media_by_uri}->execute($uri);
@@ -425,6 +426,10 @@ WHERE Uri = ?
 UPDATE Feed SET Updated = DATETIME(?, 'unixepoch') WHERE Id = ?
 	");
 
+	$self->{sth}->{update_feed_syncronized_timestamp} = $self->{dbh}->prepare("
+UPDATE Feed SET Syncronized = DATETIME(?, 'unixepoch') WHERE Id = ?
+	");
+
 	$self->{dbh}->do('
 CREATE TEMPORARY TABLE LocalMedia (Id INTEGER NOT NULL)
 	');
@@ -532,7 +537,7 @@ sub commit {
 	my $self = shift;
 	my ($updated_time) = @_;
 	
-	$self->{sth}->{update_feed_timestamp}->execute($updated_time, $self->{feed_id});
+	$self->{sth}->{update_feed_syncronized_timestamp}->execute($updated_time, $self->{feed_id});
 
 	$self->{dbh}->do("
 DELETE FROM Entry 
