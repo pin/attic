@@ -5,6 +5,7 @@ use strict;
 
 use Data::Dumper;
 use Log::Log4perl;
+use XML::Atom::Feed;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -58,6 +59,64 @@ WHERE m.Uri LIKE '$feed_uri%'
 	return $self->{router}->{media}->process($request, $media);
 }
 
+sub fetch_recent_entries {
+	my $self = shift;
+	my ($feed_uri, $count, $offset) = @_;
+	$count ||= 10;
+	$offset ||= 0;
+	my $entries = [];
+	my $sth = $self->{router}->{db}->sh->prepare("
+SELECT e.Uri, f.Uri AS FeedUri FROM Entry e
+JOIN MediaEntry me ON me.EntryId = e.Id
+JOIN Media m ON me.MediaId = m.Id
+JOIN Feed f ON f.Id = m.FeedId
+WHERE e.Uri LIKE '$feed_uri%'
+ORDER BY e.Updated DESC
+LIMIT ? OFFSET ?
+	");
+	$sth->execute($count, $offset);
+	while (my $row = $sth->fetchrow_hashref) {
+		my $entry = $self->{router}->{db}->load_entry($row->{Uri});
+		$entry->elem->setAttribute('xml:base', $row->{FeedUri});
+		push @$entries, $entry;
+	}
+	return @$entries ? $entries : undef;
+}
+
+sub recent_entries {
+	my $self = shift;
+	my ($request, $feed, $feed_uri) = @_;
+	my $offset = $request->uri->query_param('start') || 0;
+	my $count = 0;
+	my $position = 0;
+	while ($count < 10) {
+		my $entries = $self->fetch_recent_entries($feed_uri, 10, $position) or last;
+		$position += 10;
+		foreach my $entry (@$entries) {
+			my $response = $self->{router}->{page}->process($request, $entry);
+			if ($entry->content) {
+				foreach my $node ($entry->content->elem->findnodes('//script')) {
+					$node->parentNode->removeChild($node);
+				}
+			}
+			elsif ($entry->category->term eq 'page') {
+				next;
+			}
+			if ($offset) {
+				$offset--;
+			}
+			else {
+				$feed->add_entry($entry);
+				$count++;
+			}
+		}
+	}
+	if (my $parent_link = $self->{router}->{db}->parent_link($feed_uri)) {
+		$feed->add_link($parent_link);
+	}
+	return $feed;
+}
+
 sub process {
 	my $self = shift;
 	my ($request, $feed) = @_;
@@ -71,6 +130,15 @@ sub process {
 		if ($request->uri->query_param('q') and $request->uri->query_param('type') and $request->uri->query_param('type') eq 'image' and $request->uri->query_param('q') eq 'random') {
 			# random picture
 			return $self->random_image($request, $feed_uri);
+		}
+		if ($request->uri->query_param('q') and $request->uri->query_param('q') eq 'recent') {
+			my $feed = $self->recent_entries($request, $feed, $feed_uri);
+			if ($request->param('type') and $request->param('type') eq 'atom') {
+				return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
+			}
+			else {
+				return [200, ['Content-type', 'text/html'], [Attic::Template->transform('feed', $feed->elem->ownerDocument)]];
+			}
 		}
 		# process directory
 		my $index_uri = $self->{router}->{db}->append_entry($feed_uri, 'index');

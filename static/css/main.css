@@ -39,3 +39,8 @@ div.copyright-notice {
   -webkit-box-shadow: -4px 4px 4px rgba(0,0,0,0.1);
   box-shadow: -4px 4px 4px rgba(0,0,0,0.1);
 }
+
+div.page-content {
+	margin-left: 2em;
+	margin-bottom: 4em;
+}
