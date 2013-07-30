@@ -42,11 +42,23 @@ sub process {
 	if (my $date = $html_doc->findvalue('/html/head/meta[@name="Date" or @name="date" or @name="DATE"]/@content')) {
 		$entry->updated($date);
 	}
+	my ($self_link) = grep {$_->rel eq 'self'} $entry->link;
+	my ($parent_uri, $name) = $self->{router}->{db}->pop_name(URI->new($self_link->href));
 	my $body = XML::LibXML::Element->new('body');
 	if (my $html_body_list = $html_doc->find('/html/body')) {
 		foreach my $node ($html_body_list->[0]->childNodes) {
 			next if $node->nodeName eq 'h1';
 			$body->appendChild($node);
+		}
+		# replace relative links with absolute in img.src
+		foreach my $img_node ($body->findnodes('//img')) {
+			my $src = URI->new($img_node->getAttribute('src'));
+			$img_node->setAttribute('src', $src->abs($parent_uri));
+		}
+		# and in a.href
+		foreach my $a_node ($body->findnodes('//a')) {
+			my $href = URI->new($a_node->getAttribute('href'));
+			$a_node->setAttribute('href', $href->abs($parent_uri));
 		}
 	}
 	if (my @nodes = $body->childNodes) {
@@ -55,8 +67,6 @@ sub process {
 			$entry->content->elem->appendChild($node);
 		}
 	}
-	my ($self_link) = grep {$_->rel eq 'self'} $entry->link;
-	my ($parent_uri, $name) = $self->{router}->{db}->pop_name(URI->new($self_link->href));
 	if (my $h1_list = $html_doc->findnodes('/html/body/h1')) { # choose first H1 as title
 		$entry->title($h1_list->[0]->textContent);
 	}

@@ -77,7 +77,7 @@ LIMIT ? OFFSET ?
 	$sth->execute($count, $offset);
 	while (my $row = $sth->fetchrow_hashref) {
 		my $entry = $self->{router}->{db}->load_entry($row->{Uri});
-		$entry->elem->setAttribute('xml:base', $row->{FeedUri});
+		#$entry->elem->setAttribute('xml:base', $row->{FeedUri});
 		push @$entries, $entry;
 	}
 	return @$entries ? $entries : undef;
@@ -87,19 +87,30 @@ sub recent_entries {
 	my $self = shift;
 	my ($request, $feed, $feed_uri) = @_;
 	my $offset = $request->uri->query_param('start') || 0;
+	my $size = $request->uri->query_param('size') || 10;
 	my $count = 0;
 	my $position = 0;
-	while ($count < 10) {
-		my $entries = $self->fetch_recent_entries($feed_uri, 10, $position) or last;
-		$position += 10;
+	my $page_uri_list = {};
+	while ($count < $size) {
+		my $entries = $self->fetch_recent_entries($feed_uri, $size, $position) or last;
+		$position += $size;
 		foreach my $entry (@$entries) {
-			my $response = $self->{router}->{page}->process($request, $entry);
+			$self->{router}->{page}->populate($entry);
+			next unless $entry->category;
+			if ($entry->category->term eq 'page') {
+				my $response = $self->{router}->{page}->process($request, $entry);			
+			}
 			if ($entry->content) {
-				foreach my $node ($entry->content->elem->findnodes('//script')) {
+				foreach my $node ($entry->content->elem->findnodes('//script')) { # remove JS
 					$node->parentNode->removeChild($node);
 				}
+				my ($self_link) = grep {$_->rel eq 'self'} $entry->link;
+				$page_uri_list->{$self_link->href} = 1;
 			}
 			elsif ($entry->category->term eq 'page') {
+				next;
+			}
+			if ($entry->category->term eq 'image' and exists $page_uri_list->{$entry->elem->getAttribute('xml:base')}) {
 				next;
 			}
 			if ($offset) {
@@ -107,7 +118,7 @@ sub recent_entries {
 			}
 			else {
 				$feed->add_entry($entry);
-				$count++;
+				last unless $count++ < $size;
 			}
 		}
 	}
@@ -132,12 +143,19 @@ sub process {
 			return $self->random_image($request, $feed_uri);
 		}
 		if ($request->uri->query_param('q') and $request->uri->query_param('q') eq 'recent') {
+			# recent 10 pages
 			my $feed = $self->recent_entries($request, $feed, $feed_uri);
-			if ($request->param('type') and $request->param('type') eq 'atom') {
-				return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
+			if ($feed->entries) {
+				if ($request->param('type') and $request->param('type') eq 'atom') {
+					return [200, ['Content-type', 'text/xml'], [$feed->as_xml]];
+				}
+				else {
+					return [200, ['Content-type', 'text/html'], [Attic::Template->transform('feed', $feed->elem->ownerDocument)]];
+				}
 			}
 			else {
-				return [200, ['Content-type', 'text/html'], [Attic::Template->transform('feed', $feed->elem->ownerDocument)]];
+				# nothing recent (or maybe bad start/size parameters)
+				return $self->not_found($request, $feed_uri, $feed->title);
 			}
 		}
 		# process directory

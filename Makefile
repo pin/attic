@@ -19,6 +19,7 @@ install: test
 	install -m644 template/not-found.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/page.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/video.xsl $(DESTDIR)/usr/lib/attic/template/
+	install -m644 template/feed.xsl $(DESTDIR)/usr/lib/attic/template/
 	
 	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/attic/lighttpd.conf
 	install -m644 etc/home.conf $(DESTDIR)/etc/attic/
@@ -43,6 +44,8 @@ install: test
 	install -m644 lib/Attic/Page/Movie.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
 	install -m644 lib/Attic/Page/Picture.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
 	install -m644 lib/Attic/Page/Proxy.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Markdown.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
+	install -m644 lib/Attic/Page/Feed.pm $(DESTDIR)/usr/share/perl5/Attic/Page/
 
 	install -d $(DESTDIR)/usr/share/perl5/Attic/Media/
 	install -m644 lib/Attic/Media/File.pm $(DESTDIR)/usr/share/perl5/Attic/Media/
