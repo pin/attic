@@ -67,6 +67,7 @@ Id INTEGER PRIMARY KEY AUTOINCREMENT,
 MediaId TEXT NOT NULL,
 Width INTEGER,
 Height INTEGER,
+Description TEXT,
 FOREIGN KEY(MediaId) REFERENCES Media(Id) ON DELETE CASCADE
 	)');
 	$dbh->do('
@@ -233,9 +234,10 @@ WHERE Uri = ?
 	$entry->updated($row->{Updated});
 
 	$cache->{select_media_for_entry_by_uri} ||= $class->sh->prepare("
-SELECT m.Title, m.Uri, m.Type FROM Media m
+SELECT m.Title, m.Uri, m.Type, i.Description FROM Media m
 JOIN MediaEntry me ON m.Id = me.MediaId
 JOIN Entry e ON me.EntryId = e.Id
+LEFT OUTER JOIN Image i ON m.Id = i.MediaId
 WHERE e.Uri = ?
 	");
 	$cache->{select_media_for_entry_by_uri}->execute($uri);
@@ -247,6 +249,10 @@ WHERE e.Uri = ?
 		$link->type($row->{Type});
 		$link->href($row->{Uri});
 		$entry->add_link($link);
+		if (my $description = $row->{Description}) {
+			my $dc_ns = XML::Atom::Namespace->new(dc => 'http://purl.org/dc/elements/1.1/');	
+		   	$entry->set($dc_ns, 'description', $description);
+		}
 	}	
 
 	return $entry;
@@ -317,11 +323,11 @@ WHERE Uri = ?
 
 sub update_image {
 	my $class = shift;
-	my ($uri, $width, $height) = @_;
+	my ($uri, $width, $height, $description) = @_;
 	my $sth = $class->sh->prepare("
-INSERT OR REPLACE INTO Image (MediaId, Width, Height) VALUES ((SELECT Id FROM Media WHERE Uri = ?), ?, ?)
+INSERT OR REPLACE INTO Image (MediaId, Width, Height, Description) VALUES ((SELECT Id FROM Media WHERE Uri = ?), ?, ?, ?)
 	");
-	$sth->execute($uri, $width, $height);
+	$sth->execute($uri, $width, $height, $description);
 }
 
 sub load_image {
@@ -491,6 +497,9 @@ sub process_media {
 	my $media_id;
 	if (my $row = $self->{sth}->{select_media}->fetchrow_hashref) {
 		$media_id = $row->{Id};
+		$self->{dbh}->do("
+UPDATE Media SET Updated = DATETIME(?, 'unixepoch'), Type = ? WHERE Id = ?
+		", {}, $updated_time, $content_type, $media_id);
 	}
 	else {
 		$self->{dbh}->do("

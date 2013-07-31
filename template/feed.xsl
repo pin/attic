@@ -1,6 +1,7 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:atom="http://www.w3.org/2005/Atom"
-  xmlns:ae="http://purl.org/atom/ext/">
+  xmlns:ae="http://purl.org/atom/ext/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
 
 <xsl:include href="config.xsl"/>
 <xsl:include href="date.xsl"/>
@@ -35,6 +36,7 @@
 <xsl:template match="/atom:feed/atom:entry[atom:category/@term='image']">
   <div class="page-content">
     <h2><a href="{atom:link/@href}"><xsl:value-of select="atom:title"/></a></h2>
+    <p><xsl:value-of select="dc:description"/></p>
     <img class="th" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
     <xsl:apply-templates select="atom:updated"/>
   </div>

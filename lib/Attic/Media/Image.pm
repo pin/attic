@@ -125,6 +125,7 @@ sub lookup_thumbnail {
 	my $path = $self->{router}->path(URI->new($media->{uri}));
 	my $cache_path = $self->thumbnail_path($media, $px);
 	my @cache_s = stat $cache_path;
+#	$log->info($media->{updated}, "   ",$cache_s[9]);
 	if (@cache_s and $cache_s[9] > $media->{updated}) {
 		return ($cache_path, \@cache_s);
 	}
@@ -181,7 +182,8 @@ sub make_thumbnail {
 				($imageHeight, $imageWidth) = ($imageWidth, $imageHeight);
 			}
 		}
-		$self->{router}->{db}->update_image($media->{uri}, $imageWidth, $imageHeight);
+		my $description = $et->GetInfo({Group1 => ['XMP-dc']})->{Description};
+		$self->{router}->{db}->update_image($media->{uri}, $imageWidth, $imageHeight, $description);
 	}
 	for my $px (sort {$a < $b} @$aspects) {
 		my $cache_path = $self->thumbnail_path($media, $px);
