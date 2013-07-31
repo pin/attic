@@ -77,7 +77,7 @@ LIMIT ? OFFSET ?
 	$sth->execute($count, $offset);
 	while (my $row = $sth->fetchrow_hashref) {
 		my $entry = $self->{router}->{db}->load_entry($row->{Uri});
-		#$entry->elem->setAttribute('xml:base', $row->{FeedUri});
+		$entry->elem->setAttribute('xml:base', $row->{FeedUri});
 		push @$entries, $entry;
 	}
 	return @$entries ? $entries : undef;
