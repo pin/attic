@@ -60,6 +60,7 @@ sub discover_feed {
 	if (my $feed = $self->{db}->load_feed($uri)) {
 		# $log->info("$feed->{syncronized} $s[10]");
 		# BUG: this broke update of dir in case file permissions changed
+		# WORKAROUND: update directory often even if changes are not visible
 		return $feed if $feed->{syncronized} == $s[10] and time - $feed->{syncronized} < 10;
 	}
 	opendir my $dh, $path or die "can't open $path: $!";
