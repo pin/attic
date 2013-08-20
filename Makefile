@@ -37,6 +37,7 @@ install: test
 	install -m644 lib/Attic/Page.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Template.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Util.pm $(DESTDIR)/usr/share/perl5/Attic/
+	install -m644 lib/Attic/ThumbnailSize.pm $(DESTDIR)/usr/share/perl5/Attic/
 	install -m644 lib/Attic/Config.pm $(DESTDIR)/usr/share/perl5/Attic/
 
 	install -d $(DESTDIR)/usr/share/perl5/Attic/Page/

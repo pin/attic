@@ -1,5 +1,6 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:atom="http://www.w3.org/2005/Atom">
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:th="http://dp-net.com/2013/th">
 
 <xsl:include href="config.xsl"/>
 
@@ -41,7 +42,12 @@ ul.links li:last-child:after { content: "" }
 </xsl:template>
 
 <xsl:template match="/atom:feed/atom:entry[atom:category/@term='image']">
-  <a href="{atom:link/@href}"><img class="th" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?px=300"/></a>
+  <a href="{atom:link/@href}">
+    <xsl:apply-templates select="atom:link[@rel='alternate' and @type='image/jpg']" mode="image-thumbnail">
+      <xsl:with-param name="size" select="'small'"/>
+      <xsl:with-param name="class" select="'th'"/>
+    </xsl:apply-templates>
+  </a>
 </xsl:template>
 
 <xsl:template match="/atom:feed/atom:entry[atom:category/@term='video']">

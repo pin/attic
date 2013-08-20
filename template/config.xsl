@@ -1,6 +1,7 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:atom="http://www.w3.org/2005/Atom"
-  xmlns:ae="http://purl.org/atom/ext/">
+  xmlns:ae="http://purl.org/atom/ext/"
+  xmlns:th="http://dp-net.com/2013/th">
 
 <xsl:template name="common-html-head-tags">
   <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js" type="text/javascript"></script>
@@ -122,6 +123,29 @@ _gaq.push(['_trackPageview']);
     <xsl:apply-templates select="ae:inline/atom:feed/atom:link[@rel='up']" mode="navigation-link"/>
     <a href="{@href}"><xsl:value-of select="ae:inline/atom:feed/atom:title"/></a> / 
   </xsl:if>
+</xsl:template>
+
+<xsl:template mode="image-thumbnail" match="atom:link[@rel='alternate' and @type='image/jpg']">
+  <xsl:param name="size"/>
+  <xsl:param name="class"/>
+  <xsl:param name="alt"/>
+  <xsl:choose>
+    <xsl:when test="@width and @height"> <!-- WORKAROUND: maybe this should be simplified and check removed -->
+      <xsl:variable name="th" select="th:th_size($size, number(@width), number(@height))"/>
+      <img class="{$class}" src="{@href}?px={$th[1]}" width="{$th[2]}" height="{$th[3]}">
+        <xsl:if test="$alt">
+          <xsl:attribute name="alt"><xsl:value-of select="$alt"/></xsl:attribute>
+        </xsl:if>
+      </img>
+    </xsl:when>
+    <xsl:otherwise>
+      <img class="{$class}" src="{@href}?size={$size}">
+        <xsl:if test="$alt">
+          <xsl:attribute name="alt"><xsl:value-of select="$alt"/></xsl:attribute>
+        </xsl:if>
+      </img>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>

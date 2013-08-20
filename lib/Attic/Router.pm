@@ -16,6 +16,7 @@ use Attic::Config;
 use Attic::Db;
 use Attic::Media;
 use Attic::Page;
+use Attic::ThumbnailSize;
 
 my $log = Log::Log4perl->get_logger();
 
@@ -26,6 +27,7 @@ sub prepare_app {
 	$self->{page} = Attic::Page->new(router => $self);
 	$self->{directory} = Attic::Directory->new(router => $self);
 	$self->{media} = Attic::Media->new(router => $self);
+	$self->{th_calc} = Attic::ThumbnailSize->new();
 }
 
 sub path {
@@ -61,7 +63,7 @@ sub discover_feed {
 		# $log->info("$feed->{syncronized} $s[10]");
 		# BUG: this broke update of dir in case file permissions changed
 		# WORKAROUND: update directory often even if changes are not visible
-		return $feed if $feed->{syncronized} == $s[10] and time - $feed->{syncronized} < 10;
+		return $feed if $feed->{updated_ts} == $s[10] and (time - $feed->{syncronized} < 10);
 	}
 	opendir my $dh, $path or die "can't open $path: $!";
 	my $dt = Attic::Db::UpdateTransaction->new(dbh => $self->{db}->sh, uri => $uri);
@@ -92,7 +94,7 @@ sub discover_feed {
 			$dt->process_feed($f_uri, $f_s[9]);
 		}
 	}
-	$dt->commit($s[10]);
+	$dt->commit($s[10], time);
 	closedir $dh;
 	return $self->{db}->load_feed($uri);
 }

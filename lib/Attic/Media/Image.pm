@@ -13,6 +13,7 @@ use File::Path;
 use Image::Magick;
 use Attic::Config;
 use URI::QueryParam;
+use Attic::ThumbnailSize;
 
 use base 'Attic::Media::Base';
 
@@ -34,19 +35,23 @@ sub process {
 	my ($request, $media) = @_;
 	my ($path, $s);
 	my $px;
-	if (my $size = $request->uri->query_param('size')) {
+	my $size = $request->uri->query_param('size');
+	if ($size and $size eq 'large') {
 		if (my $clientWidth = $request->cookies->{'clientWidth'} and my $clientHeight = $request->cookies->{'clientHeight'}) {
 			$clientHeight = $clientHeight - 50 if $clientHeight > 900; # preserve space for header
 			$clientWidth = $clientWidth - 40 if $clientWidth > 800; # preserve space for figure left margin
 			my ($imageWidth, $imageHeight) = $self->{router}->{db}->load_image($media->{uri});
 			if ($imageWidth and $imageHeight) {
-				$px = $self->calculate_px($clientWidth, $clientHeight, $imageWidth, $imageHeight);
+				$px = Attic::ThumbnailSize->calculate_px($clientWidth, $clientHeight, $imageWidth, $imageHeight);
 			}
 		}
 	}
+	elsif ($size and $size eq 'small') {
+		$px = 300;
+	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
-		my $standard_px = $self->fit_px($px);
+		my $standard_px = Attic::ThumbnailSize->fit_px($px);
 		if ($standard_px != $px) {
 			my $uri = $request->uri;
 			$uri->query_param_delete('size');
@@ -69,56 +74,6 @@ sub process {
 	return Attic::Media->serve_file($request, $path, $s);
 }
 
-our @aspects = (300, 350, 450, 600, 800, 1000, 1200);
-
-sub fit_px {
-	my $class = shift;
-	my ($px) = @_;
-	my $standard_px = $aspects[0];
-	foreach my $aspect (@aspects) {
-		if ($aspect > $px) {
-			last;
-		}
-		else {
-			$standard_px = $aspect;
-		}
-	}
-	return $standard_px;
-}
-
-sub calculate_px {
-	my $class = shift;
-	my ($clientWidth, $clientHeight, $imageWidth, $imageHeight) = @_;
-	my $px = $aspects[0];
-	if ($clientWidth / $clientHeight > $imageWidth / $imageHeight) {
-		foreach my $s (@aspects) {
-			if ($clientHeight > $s) {
-				$px = $s;
-			}
-			else {
-				last;
-			}
-		}
-		if ($imageWidth > $imageHeight) {
-			$px = $imageWidth / $imageHeight * $px;
-		}
-	}
-	else {
-		foreach my $s (@aspects) {
-			if ($clientWidth > $s) {
-				$px = $s;
-			}
-			else {
-				last;
-			}
-		}
-		if ($imageWidth < $imageHeight) {
-			$px = $imageHeight / $imageWidth * $px;
-		}
-	}
-	return $class->fit_px($px);
-}
-
 sub lookup_thumbnail {
 	my $self = shift;
 	my ($media, $px) = @_;
@@ -129,7 +84,7 @@ sub lookup_thumbnail {
 	if (@cache_s and $cache_s[9] > $media->{updated}) {
 		return ($cache_path, \@cache_s);
 	}
-	$self->make_thumbnail($path, $media, \@aspects);
+	$self->make_thumbnail($path, $media, \@Attic::ThumbnailSize::aspects);
 	@cache_s = stat $cache_path or die "can't make $cache_path: $!";
 	return ($cache_path, \@cache_s);
 }
@@ -213,7 +168,7 @@ sub make_thumbnail {
 }
 
 sub index {
-	shift->make_thumbnail(@_, \@aspects);
+	shift->make_thumbnail(@_, \@Attic::ThumbnailSize::aspects);
 }
 
 sub xmp_param {

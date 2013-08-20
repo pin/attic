@@ -64,7 +64,7 @@ FOREIGN KEY(EntryId) REFERENCES Entry(Id) ON DELETE CASCADE
 	$dbh->do('
 CREATE TABLE Image (
 Id INTEGER PRIMARY KEY AUTOINCREMENT,
-MediaId TEXT NOT NULL,
+MediaId TEXT NOT NULL UNIQUE,
 Width INTEGER,
 Height INTEGER,
 Description TEXT,
@@ -73,7 +73,7 @@ FOREIGN KEY(MediaId) REFERENCES Media(Id) ON DELETE CASCADE
 	$dbh->do('
 CREATE TABLE Text (
 Id INTEGER PRIMARY KEY AUTOINCREMENT,
-MediaId TEXT NOT NULL,
+MediaId TEXT NOT NULL UNIQUE,
 FOREIGN KEY(MediaId) REFERENCES Media(Id) ON DELETE CASCADE
 	)');
 	$dbh->do('COMMIT TRANSACTION');
@@ -117,7 +117,7 @@ sub load_feed {
 	my $class = shift;
 	my ($uri) = @_;
 	my $sth = $class->sh->prepare("
-SELECT Id, Title, Updated, strftime('%s', Syncronized) AS Syncronized FROM Feed
+SELECT Id, Title, Updated, strftime('%s', Updated) AS UpdatedTS, strftime('%s', Syncronized) AS Syncronized FROM Feed
 WHERE Uri = ?
 	");
 	$sth->execute($uri);
@@ -138,6 +138,7 @@ WHERE Uri = ?
 	$feed->add_link($link);
 	$feed->updated($row->{Updated});
 	$feed->{syncronized} = $row->{Syncronized} || 0; # UNIX timestamp to compare with directory mtime
+	$feed->{updated_ts} = $row->{UpdatedTS};
 	return $feed;
 }
 
@@ -234,7 +235,7 @@ WHERE Uri = ?
 	$entry->updated($row->{Updated});
 
 	$cache->{select_media_for_entry_by_uri} ||= $class->sh->prepare("
-SELECT m.Title, m.Uri, m.Type, i.Description FROM Media m
+SELECT m.Title, m.Uri, m.Type, i.Description, i.Width, i.Height FROM Media m
 JOIN MediaEntry me ON m.Id = me.MediaId
 JOIN Entry e ON me.EntryId = e.Id
 LEFT OUTER JOIN Image i ON m.Id = i.MediaId
@@ -252,6 +253,10 @@ WHERE e.Uri = ?
 		if (my $description = $row->{Description}) {
 			my $dc_ns = XML::Atom::Namespace->new(dc => 'http://purl.org/dc/elements/1.1/');	
 		   	$entry->set($dc_ns, 'description', $description);
+		}
+		if (my $width = $row->{Width} and my $height = $row->{Height}) {
+			$link->elem->setAttribute('width', $width);
+			$link->elem->setAttribute('height', $height);
 		}
 	}	
 
@@ -544,9 +549,10 @@ INSERT INTO MediaEntry (MediaId, EntryId) VALUES (?, ?)
 
 sub commit {
 	my $self = shift;
-	my ($updated_time) = @_;
+	my ($updated_time, $syncronized_time) = @_;
 	
-	$self->{sth}->{update_feed_syncronized_timestamp}->execute($updated_time, $self->{feed_id});
+	$self->{sth}->{update_feed_syncronized_timestamp}->execute($syncronized_time, $self->{feed_id});
+	$self->{sth}->{update_feed_timestamp}->execute($updated_time, $self->{feed_id});
 
 	$self->{dbh}->do("
 DELETE FROM Entry 

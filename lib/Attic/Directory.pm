@@ -137,7 +137,8 @@ sub process {
 	if (my $media = $self->{router}->{db}->load_media($uri)) {
 		return $self->{router}->{media}->process($request, $media);
 	}
-	elsif ($feed_uri eq $uri) {
+	$self->{router}->{th_calc}->set_request($request);
+	if ($feed_uri eq $uri) {
 		if ($request->uri->query_param('q') and $request->uri->query_param('type') and $request->uri->query_param('type') eq 'image' and $request->uri->query_param('q') eq 'random') {
 			# random picture
 			return $self->random_image($request, $feed_uri);

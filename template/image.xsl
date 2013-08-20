@@ -42,7 +42,11 @@ YUI().use('node', 'event', function (Y) {
       </div>
       <figure>
         <div>
-          <img class="main" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large" alt="{atom:title}"/>
+          <xsl:apply-templates select="atom:link[@rel='alternate' and @type='image/jpg']" mode="image-thumbnail">
+            <xsl:with-param name="size" select="'large'"/>
+            <xsl:with-param name="class" select="'main'"/>
+            <xsl:with-param name="alt" select="atom:title"/>
+          </xsl:apply-templates>
           <figcaption style="display: inline">
             <xsl:call-template name="date"/>
             <xsl:apply-templates select="dc:description"/>
