@@ -113,7 +113,7 @@ sub make_thumbnail {
 		die "can't read image " . $path . ": " . $error;
 	}
 	$image->Strip();
-	$image->Set(quality => 87);
+	$image->Set(quality => 85);
 	my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
 	my $rotate_degrees = 0;
 	if ($et->ExtractInfo($path)) {
@@ -142,8 +142,9 @@ sub make_thumbnail {
 	for my $px (sort {$a < $b} @$aspects) {
 		my $cache_path = $self->thumbnail_path($media, $px);
 		File::Path::make_path(dirname($cache_path)) unless -d dirname($cache_path);
-		my $aspect_ratio = $px / ($height > $width ? $height : $width);
-		$image->Resize(height => $height * $aspect_ratio, width => $aspect_ratio * $width);
+		my $max_aspect = $image->Get('height') > $image->Get('width') ? $image->Get('height') : $image->Get('width');
+		my $size_geometry = 100 * $px / $max_aspect;
+		$image->Resize(geometry => $size_geometry . '%');
 		if ($rotate_degrees != 0) {
 			$image->Rotate(degrees => $rotate_degrees);
 			$rotate_degrees = 0;
