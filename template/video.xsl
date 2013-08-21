@@ -12,16 +12,18 @@
       <xsl:call-template name="common-html-head-tags"/>
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
-      <style type="text/css">
-p.exif {
-  font-style: italic;
-  color: grey;
-}
-
-img.main {
-  float: left
-}
-      </style>
+      <script type="text/javascript"><![CDATA[
+YUI().use('node', 'event', function (Y) {
+  Y.on("domready", function() {
+    Y.all("link.navigation").each(function(link) {
+      if(link.get('rel') == 'next') {
+        var node = Y.Node.create('<a href="' + link.get('href') + '" title="' + link.get('title') + '"><div class="next-link"></div></a>');
+        Y.one("body").appendChild(node);
+      }
+    });
+  });
+});
+      ]]></script>
     </head>
     <body>
       <div>
@@ -37,34 +39,6 @@ img.main {
       </div>
     </body>
   </html>
-</xsl:template>
-
-<xsl:template name="date">
-  <xsl:choose>
-    <xsl:when test="exif:date">
-      <xsl:apply-templates select="exif:date"/>
-    </xsl:when>
-    <xsl:when test="atom:updated">
-      <xsl:apply-templates select="atom:updated"/>
-    </xsl:when>
-  </xsl:choose>
-</xsl:template>
-<xsl:template match="atom:updated">
-  <div class="date"><xsl:call-template name="iso-date"/></div>
-</xsl:template>
-<xsl:template match="exif:date">
-  <div class="date"><xsl:call-template name="exif-date"/></div>
-</xsl:template>
-
-<xsl:template name="exif">
-  <xsl:for-each select="exif:camera/text() | exif:lens/text() | exif:film/text()">
-    <xsl:value-of select="."/>
-    <xsl:if test="not(position() = last())">, </xsl:if>
-  </xsl:for-each>
-</xsl:template>
-
-<xsl:template match="dc:description">
-  <p class="description"><xsl:value-of select="."/></p>
 </xsl:template>
 
 </xsl:stylesheet>

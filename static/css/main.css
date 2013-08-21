@@ -44,3 +44,8 @@ div.page-content {
 	margin-left: 2em;
 	margin-bottom: 4em;
 }
+
+p.exif {
+  font-style: italic;
+  color: grey;
+}

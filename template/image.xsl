@@ -13,11 +13,6 @@
       <title><xsl:value-of select="atom:title"/></title>
       <xsl:apply-templates select="atom:link[@rel='previous' or @rel='next' or @rel='index']" mode="head"/>
       <style type="text/css">
-p.exif {
-  font-style: italic;
-  color: grey;
-}
-
 img.main {
   float: left
 }
@@ -72,9 +67,11 @@ YUI().use('node', 'event', function (Y) {
     </xsl:when>
   </xsl:choose>
 </xsl:template>
+
 <xsl:template match="atom:updated">
   <div class="date"><xsl:call-template name="iso-date"/></div>
 </xsl:template>
+
 <xsl:template match="exif:date">
   <div class="date"><xsl:call-template name="exif-date"/></div>
 </xsl:template>
