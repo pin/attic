@@ -37,7 +37,10 @@
   <div class="page-content">
     <h2><a href="{atom:link/@href}"><xsl:value-of select="atom:title"/></a></h2>
     <p><xsl:value-of select="dc:description"/></p>
-    <img class="th" src="{atom:link[@rel='alternate' and @type='image/jpg']/@href}?size=large"/>
+    <xsl:apply-templates select="atom:link[@rel='alternate' and @type='image/jpg']" mode="image-thumbnail">
+      <xsl:with-param name="size" select="'large'"/>
+      <xsl:with-param name="class" select="'th'"/>
+    </xsl:apply-templates>
     <xsl:apply-templates select="atom:updated"/>
   </div>
 </xsl:template>
