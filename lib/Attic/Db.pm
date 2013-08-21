@@ -283,6 +283,7 @@ JOIN MediaEntry me ON e.Id = me.EntryId
 JOIN Media m ON me.MediaId = m.Id
 JOIN Feed f ON m.FeedId = f.Id
 WHERE f.Uri = ?
+	AND e.Uri NOT LIKE '%/index' -- HACK: remove index from prev/next links
 ORDER BY e.Uri
 	");
 	$sth->execute($parent_uri);
