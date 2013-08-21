@@ -113,8 +113,7 @@ sub make_thumbnail {
 		die "can't read image " . $path . ": " . $error;
 	}
 	$image->Strip();
-	$image->Set(interlace => 'Plane');
-	$image->Set(quality => 85);
+	$image->Set(quality => 87);
 	my ($height, $width) = ($image->[0]->Get('height'), $image->[0]->Get('width'));
 	my $rotate_degrees = 0;
 	if ($et->ExtractInfo($path)) {
@@ -158,7 +157,7 @@ sub make_thumbnail {
 				$log->error('error annotate image: ' . $error);
 			}
 		}
-		$image->Write(filename => $cache_path);
+		$image->Write(filename => $cache_path, interlace => 'Plane');
 		$cache_et->ExtractInfo($cache_path);
 		$cache_et->SetNewValue('IFD1:Orientation' => 1, Type => 'ValueConv');
 		$cache_et->SetNewValue('EXIF:Orientation' => 1, Type => 'ValueConv');
