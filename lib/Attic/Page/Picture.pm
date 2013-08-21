@@ -28,11 +28,6 @@ sub populate {
 	$entry->category($category);
 	foreach my $image_link (grep {$_->type =~ /^image\// and $_->rel eq 'alternate'} $entry->link) {
 		$image_link->type('image/jpg');
-#		my ($width, $height) = $self->{router}->{db}->load_image($image_link->href);
-#		if ($width and $height) {
-#			$image_link->elem->setAttribute('width', $width);
-#			$image_link->elem->setAttribute('height', $height);
-#		}
 	}
 }
 
