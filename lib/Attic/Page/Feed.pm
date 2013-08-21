@@ -36,6 +36,11 @@ sub process {
 	my ($self_link) = grep {$_->rel eq 'self'} $entry->link;
 	my ($parent_uri, $name) = $self->{router}->{db}->pop_name(URI->new($self_link->href));
 	
+#	my $feed_link = grep {$_->href =~ /\.feed$/ and $_->rel eq 'alternate'} $entry->link;
+#	my $path = $self->{router}->path(URI->new($feed_link->href));
+#	open my $fh, $path or die "can't read $path: $!";
+#	close $fh;
+
 	my $feed = $self->{router}->{directory}->recent_entries($request, XML::Atom::Feed->new(), $parent_uri);
 	
 	if (my $parent_link = $self->{router}->{db}->parent_link(URI->new($self_link->href))) {
