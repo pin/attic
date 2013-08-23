@@ -14,6 +14,7 @@ use Image::Magick;
 use Attic::Config;
 use URI::QueryParam;
 use Attic::ThumbnailSize;
+use Digest::SHA1;
 
 use base 'Attic::Media::Base';
 
@@ -22,7 +23,6 @@ my $log = Log::Log4perl->get_logger();
 sub accept {
 	my $self = shift;
 	my ($media) = @_;
-	return 0 if $media->{uri} =~ /map-with-track\.jpg$/; # HACK
 	my ($type, $subtype) = split /\//, $media->{type};
 	if ($type eq 'image' and $subtype ne 'gif' and $subtype ne 'vnd.microsoft.icon') {
 		return 1;
@@ -33,7 +33,6 @@ sub accept {
 sub process {
 	my $self = shift;
 	my ($request, $media) = @_;
-	my ($path, $s);
 	my $px;
 	my $size = $request->uri->query_param('size');
 	if ($size and $size eq 'large') {
@@ -51,19 +50,11 @@ sub process {
 	}
 	$px = $request->uri->query_param('px') if $request->uri->query_param('px');
 	if ($px) {
-		my $standard_px = Attic::ThumbnailSize->fit_px($px);
-		if ($standard_px != $px) {
-			my $uri = $request->uri;
-			$uri->query_param_delete('size');
-			$uri->query_param('px', $standard_px);
-			return [301, ['Location' => $uri], ["follow $uri"]];
-		}
-		eval {
-			($path, $s) = $self->lookup_thumbnail($media, $px);
-		};
-		if (my $error = $@) {
-			return [500, ['Content-type', 'text/plain'], ["can't load thumbnail: $error"]];
-		}
+		return $self->serve_thumbnail($request, $media, $px);
+	}
+	my $sha1_digest = $request->uri->query_param('sha1');
+	if (defined $sha1_digest) {
+		$self->serve_original_file($request, $media, $sha1_digest);
 	}
 	else {
 		my $uri = $request->uri;
@@ -71,7 +62,61 @@ sub process {
 		$uri->query_param_delete('size');
 		return [301, ['Location' => $uri], ["follow $uri"]];
 	}
+}
+
+sub compare_digests {
+	my $self = shift;
+	my ($digest_a, $digest_b) = @_;
+	return 0 unless $digest_a and $digest_b;
+	return 0 unless length $digest_a == length $digest_b;
+	my @a = split '', $digest_a;
+	my @b = split '', $digest_b;
+	my $is_equals = 1;
+	for (my $i = 0; $i < length $digest_a; $i++) {
+		$is_equals = 0 if $a[$i] ne $b[$i];
+	}
+	return $is_equals;
+}
+
+sub serve_thumbnail {
+	my $self = shift;
+	my ($request, $media, $px) = @_;
+	my $standard_px = Attic::ThumbnailSize->fit_px($px);
+	if ($standard_px != $px) {
+		my $uri = $request->uri;
+		$uri->query_param_delete('size');
+		$uri->query_param('px', $standard_px);
+		return [301, ['Location' => $uri], ["follow $uri"]];
+	}
+	my ($path, $s);
+	eval {
+		($path, $s) = $self->lookup_thumbnail($media, $px);
+	};
+	if (my $error = $@) {
+		return [500, ['Content-type', 'text/plain'], ["can't load thumbnail: $error"]];
+	}
 	return Attic::Media->serve_file($request, $path, $s);
+}
+
+sub serve_original_file {
+	my $self = shift;
+	my ($request, $media, $sha1_digest) = @_;
+	my $path = $self->{router}->path(URI->new($media->{uri}));
+	my $sha1 = Digest::SHA1->new();
+	open my $fh, $path or die "can't read $path: $!";
+	binmode $fh;
+	$sha1->addfile($fh);
+	my @s = stat $fh;
+	close $fh;
+	# using hand-made comparison instead of eq to avoid timing attack vulnerability
+	if ($self->compare_digests($sha1->hexdigest, $sha1_digest)) {
+		return Attic::Media->serve_file($request, $path, \@s);
+	}
+	else {
+		my $uri = $request->uri;
+		$uri->query_param_delete('sha1');
+		return [301, ['Location' => $uri], ["image digest is incorrect, follow $uri"]];
+	}
 }
 
 sub lookup_thumbnail {
