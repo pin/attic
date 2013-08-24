@@ -20,6 +20,7 @@ install: test
 	install -m644 template/page.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/video.xsl $(DESTDIR)/usr/lib/attic/template/
 	install -m644 template/feed.xsl $(DESTDIR)/usr/lib/attic/template/
+	install -m644 template/replace.xsl $(DESTDIR)/usr/lib/attic/template/
 	
 	install -m644 etc/lighttpd.conf $(DESTDIR)/etc/attic/lighttpd.conf
 	install -m644 etc/home.conf $(DESTDIR)/etc/attic/

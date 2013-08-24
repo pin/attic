@@ -5,6 +5,7 @@
 
 <xsl:include href="config.xsl"/>
 <xsl:include href="date.xsl"/>
+<xsl:include href="replace.xsl"/>
 
 <xsl:template match="atom:entry">
   <html>
@@ -78,7 +79,11 @@ YUI().use('node', 'event', function (Y) {
 
 <xsl:template name="exif">
   <xsl:for-each select="exif:camera/text() | exif:lens/text() | exif:film/text()">
-    <xsl:value-of select="."/>
+    <xsl:call-template name="string-replace-all">
+      <xsl:with-param name="text" select="."/>
+      <xsl:with-param name="replace" select="' '"/>
+      <xsl:with-param name="by" select="'&#160;'"/>
+    </xsl:call-template>
     <xsl:if test="not(position() = last())">, </xsl:if>
   </xsl:for-each>
 </xsl:template>
