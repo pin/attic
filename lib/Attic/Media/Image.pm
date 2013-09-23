@@ -54,7 +54,7 @@ sub process {
 	}
 	my $sha1_digest = $request->uri->query_param('sha1');
 	if (defined $sha1_digest) {
-		$self->serve_original_file($request, $media, $sha1_digest);
+		return $self->serve_original_file($request, $media, $sha1_digest);
 	}
 	else {
 		my $uri = $request->uri;
