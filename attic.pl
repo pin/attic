@@ -1,3 +1,3 @@
 #!/usr/bin/env perl
-use Shla;
-Shla->run(packages => ['Attic']);
+use Term::Shell::Pluggable;
+Term::Shell::Pluggable->run(packages => ['Attic']);

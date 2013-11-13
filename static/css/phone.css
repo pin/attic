@@ -20,3 +20,8 @@ div.navigation-bar, h1  {
 .next-link {
   display: none;
 }
+
+div.page-content {
+	margin-left: 0.1em;
+	margin-bottom: 2em;
+}
