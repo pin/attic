@@ -156,7 +156,7 @@ ORDER BY e.Uri
 	my $list = [];
 	$sth->execute($uri);
 	while (my $row = $sth->fetchrow_hashref) {
-		my $entry = $self->load_entry($row->{Uri});
+		my $entry = $self->load_entry(URI->new($row->{Uri}));
 		push @$list, $entry if $entry;
 	}
 	return $list;

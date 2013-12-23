@@ -10,8 +10,11 @@ sub system_ex {
 	my $class = shift;
 	my ($command, $log) = @_;
 	my $start_time = time;
-	$log->debug("executing $command") if defined $log;
-	my $pid = open3(*CMD_IN, *CMD_OUT, *CMD_ERR, $command);
+	if (defined $log) {
+		my $command_str = ref $command eq 'ARRAY' ? join ' ', @$command : $command;
+		$log->debug("executing $command_str");
+	}
+	my $pid = open3(*CMD_IN, *CMD_OUT, *CMD_ERR, ref $command eq 'ARRAY' ? @$command : $command);
 	close CMD_IN;
 	my $selector = IO::Select->new();
 	$selector->add(*CMD_ERR, *CMD_OUT);
