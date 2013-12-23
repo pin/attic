@@ -1,3 +1,9 @@
+attic (0.1-6) unstable; urgency=low
+
+  * infinite loop while processing some invalid URLs is removed
+
+ -- Dmitri Popov <operator@cv.dp-net.com>  Mon, 23 Dec 2013 17:54:39 -0500
+
 attic (0.1-5) unstable; urgency=low
 
   * adjust video size to ratio, use avconv instead of ffmpeg
