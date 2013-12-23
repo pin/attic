@@ -57,10 +57,19 @@ sub process {
 		return $self->serve_original_file($request, $media, $sha1_digest);
 	}
 	else {
-		my $uri = $request->uri;
-		$uri->query_param('px', 800);
-		$uri->query_param_delete('size');
-		return [301, ['Location' => $uri], ["follow $uri"]];
+		my ($imageWidth, $imageHeight) = $self->{router}->{db}->load_image($media->{uri});
+		my $maxAspect = $imageWidth > $imageHeight ? $imageWidth : $imageWidth;
+		if ($maxAspect < 800) {
+			my $path = $self->{router}->path(URI->new($media->{uri}));
+			my @s = stat $path or die "can't stat $path: $!";
+			return Attic::Media->serve_file($request, $path, \@s);
+		}
+		else {
+			my $uri = $request->uri;
+			$uri->query_param('px', 800);
+			$uri->query_param_delete('size');
+			return [301, ['Location' => $uri], ["follow $uri"]];
+		}
 	}
 }
 
