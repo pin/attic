@@ -70,8 +70,8 @@ sub process {
 	if (my $h1_list = $html_doc->findnodes('/html/body/h1')) { # choose first H1 as title
 		$entry->title($h1_list->[0]->textContent);
 	}
-	elsif (my $title = $html_doc->findvalue('/html/head/title')) { # or page title
-		$entry->title($title);
+	elsif ($html_doc->exists('/html/head/title')) { # or page title
+		$entry->title($html_doc->findvalue('/html/head/title'));
 	}
 	else {
 		$entry->title($name); # or file basename
