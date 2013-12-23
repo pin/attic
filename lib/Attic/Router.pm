@@ -41,14 +41,21 @@ sub call {
 	my $self = shift;
 	my ($env) = @_;
 	my $request = Plack::Request->new($env);
-	my $uri = URI->new($request->uri->path);
+	my $uri_path = $request->uri->path;
+	if ($uri_path =~ /\/\/+/) {
+		$uri_path =~ s/\/+/\//g;
+		my $uri = $request->uri;
+		$uri->path($uri_path);
+		return [301, ['Location' => $uri], ["less slashes follows, comrade! $uri"]];
+	}
+	my $uri = URI->new($uri_path);
 	while ($uri) {
 		if (my $feed = $self->discover_feed($uri)) {
 			return $self->{directory}->process($request, $feed);
 		}
 		($uri, undef) = Attic::Db->pop_name($uri);
 	}
-	return [500, ['Content-type', 'text/plain'], ['shit happens']];
+	return [500, ['Content-type', 'text/plain'], ['no documents found']];
 }
 
 sub discover_feed {
@@ -66,7 +73,7 @@ sub discover_feed {
 		return $feed if $feed->{updated_ts} == $s[10] and (time - $feed->{syncronized} < 10);
 	}
 	opendir my $dh, $path or die "can't open $path: $!";
-	my $dt = Attic::Db::UpdateTransaction->new(dbh => $self->{db}->sh, uri => $uri);
+	my $dt = Attic::Db::UpdateTransaction->new(dbh => $self->{db}->sh, uri => $uri) or return undef;
 	while (my $f = readdir $dh) {
 		next if $f =~ /^\./;
 		my $f_path = File::Spec->catfile($path, $f);
