@@ -373,7 +373,7 @@ sub pop_name {
 	my ($uri) = @_;
 	my $parent_uri = URI->new($uri);
 	return undef if $uri->path eq '/';
-	my @segments = grep {$_ ne '.' and $_ ne '..'} $uri->path_segments;
+	my @segments = File::Spec->no_upwards($uri->path_segments);
 	my $name = pop @segments;
 	$name = pop @segments unless length $name; # in case we already have slash at the end
 	$parent_uri->path_segments(@segments, '');
@@ -384,7 +384,7 @@ sub append_entry {
 	my $class = shift;
 	my ($parent_uri, $name) = @_;
 	my $uri = URI->new($parent_uri);
-	my @segments = grep {$_ ne '.' and $_ ne '..'} $parent_uri->path_segments;
+	my @segments = File::Spec->no_upwards($parent_uri->path_segments);
 	pop @segments if $segments[$#segments] eq '';
 	$uri->path_segments(@segments, $name);
 	return $uri;
