@@ -10,6 +10,9 @@ YUI().use('event', function (Y) {
   Y.on('domready', function (e) {
     document.cookie = 'clientHeight=' + document.body.clientHeight + '; path=/';
     document.cookie = 'clientWidth=' + document.body.clientWidth + '; path=/';
+    if (window.devicePixelRatio) {
+      document.cookie = 'devicePixelRatio=' + window.devicePixelRatio + '; path=/';
+    }
   });
 });
   ]]></script>
