@@ -43,20 +43,22 @@ sub random_image {
 SELECT m.Uri, i.Width, i.Height FROM Image i
 JOIN Media m ON i.MediaId = m.Id
 WHERE m.Uri LIKE '$feed_uri%'
+	AND i.Width > 800
+	AND i.Height > 600
+	AND i.Width * 1.2 > i.Height
+ORDER BY RANDOM() LIMIT 1
 	");
 	$sth->execute();
 	my $s = [];
-	while (my $row = $sth->fetchrow_hashref) {
-		my $w = $row->{Width};
-		my $h = $row->{Height};
-		if ($w > $h and $w > 800 and $h > 600) {
-			push @$s, $row->{Uri}; 
-		}
+	if (my $row = $sth->fetchrow_hashref) {
+		my $uri = $row->{Uri};
+		my $width = $row->{Width};
+		my $height = $row->{Height};
+		return [200, ['Content-type', 'application/json'], ["{\"uri\": \"$uri\", \"width\": $width, \"height\": $height}"]];
 	}
-	my $n = scalar @$s;
-	my $uri = $s->[int(rand($n))];
-	my $media = $self->{router}->{db}->load_media($uri);
-	return $self->{router}->{media}->process($request, $media);
+	else {
+		return [404, ['Content-type', 'text/plain'], ['no such image']];
+	}
 }
 
 sub fetch_recent_entries {
@@ -140,7 +142,6 @@ sub process {
 	$self->{router}->{th_calc}->set_request($request);
 	if ($feed_uri eq $uri) {
 		if ($request->uri->query_param('q') and $request->uri->query_param('type') and $request->uri->query_param('type') eq 'image' and $request->uri->query_param('q') eq 'random') {
-			# random picture
 			return $self->random_image($request, $feed_uri);
 		}
 		if ($request->uri->query_param('q') and $request->uri->query_param('q') eq 'recent') {
